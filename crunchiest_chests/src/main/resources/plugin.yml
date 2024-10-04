@@ -1,0 +1,4 @@
+name: crunchiest_chests
+main: com.crunchiest.crunchiest_chests.Plugin
+version: 0.0.1
+api-version: 1.15
