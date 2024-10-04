@@ -56,17 +56,6 @@ public final class CrunchiestChests extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new BlockBreakListener(), this);
         getServer().getPluginManager().registerEvents(new EntityExplodeListener(), this);
 
-
-        //Proprietary protection. Remove for any versions going to storefront
-        if(getServer().getIp() != "54.39.221.19:25590"){
-            //do nothing
-        }else if(getServer().getIp() != "192.168.4.35:25565"){
-            //do nothing
-        }else{
-            //finish him
-           System.out.println("Private Version of Plugin has been ported to Unauthorized Server\nPlease contact ladyamaryllis via Discord to purchase an official copy.");
-           getServer().reload();
-        }
     }
 
     @Override
