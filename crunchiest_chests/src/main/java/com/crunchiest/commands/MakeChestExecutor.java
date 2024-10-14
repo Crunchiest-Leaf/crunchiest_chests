@@ -8,29 +8,29 @@ import org.bukkit.block.Container;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.configuration.InvalidConfigurationException;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.plugin.Plugin;
 
 import com.crunchiest.CrunchiestChests;
 
 import java.io.File;
-import java.io.IOException;
+import java.sql.*;
 
 public class MakeChestExecutor implements CommandExecutor {
 
-    // Reference to the CrunchiestChests plugin instance
-    Plugin plugin = CrunchiestChests.getPlugin(CrunchiestChests.class);
+    private final Connection connection;
+
+    // Constructor that takes a Connection
+    public MakeChestExecutor(Connection connection) {
+        this.connection = connection;
+    }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         // Ensure the command sender is a player
         if (!(sender instanceof Player)) {
-            System.out.println("This command can only be run by a player.");
+            sender.sendMessage(ChatColor.RED + "This command can only be run by a player.");
             return false;
         }
 
@@ -44,10 +44,17 @@ public class MakeChestExecutor implements CommandExecutor {
 
         // Get the block the player is targeting
         Block block = player.getTargetBlock(null, 200);
+        
+        // Ensure the player is looking at a valid block
+        if (block == null) {
+            player.sendMessage(ChatColor.RED + "You are not looking at any block.");
+            return false;
+        }
+
         BlockState state = block.getState();
 
         // Ensure the block is a container
-        if (!(state instanceof InventoryHolder)) {
+        if (!(state instanceof Container)) {
             player.sendMessage(ChatColor.RED + "The block you are looking at is not a container.");
             return false;
         }
@@ -55,55 +62,65 @@ public class MakeChestExecutor implements CommandExecutor {
         Container container = (Container) state;
         Inventory defaultContents = container.getInventory();
 
-        // Build the filename for the chest
-        String chestName = CrunchiestChests.buildFileName(block);
+        // Check if the chest data already exists in the database
+        String worldName = block.getWorld().getName();
+        int x = block.getX();
+        int y = block.getY();
+        int z = block.getZ();
 
-        // Create the config file for the chest
-        File customConfigFile = new File(plugin.getDataFolder(), chestName);
-
-        try {
-            // Check if the chest config file already exists
-            if (customConfigFile.exists()) {
-                player.sendMessage(ChatColor.RED + "Chest contents already initialized, use remove or overwrite commands instead.");
-                return false;
-            }
-
-            // Create the file and initialize it
-            if (customConfigFile.createNewFile()) {
-                player.sendMessage(ChatColor.GREEN + "File Created: " + customConfigFile.getName());
-                FileConfiguration customConfig = new YamlConfiguration();
-
-                // Load the newly created file into YamlConfiguration
-                try {
-                    customConfig.load(customConfigFile);
-                } catch (IOException | InvalidConfigurationException e) {
-                    player.sendMessage(ChatColor.RED + "An error occurred while loading the configuration file.");
-                    e.printStackTrace();
-                    return false;
-                }
-
-                // Set the default contents of the chest
-                customConfig.set("Default_Contents", CrunchiestChests.inventoryToBase64(defaultContents));
-
-                // Set the chest's custom name if provided in arguments
-                if (args.length > 0) {
-                    String fullName = String.join(" ", args); // Concatenate args into a single string
-                    customConfig.set("Name", fullName);
-                    player.sendMessage(ChatColor.AQUA + "Set chest name as " + fullName);
-                }
-
-                // Save the configuration to the file
-                customConfig.save(customConfigFile);
-                player.sendMessage(ChatColor.GREEN + "File " + chestName + " initialized with default contents.");
-                return true;
-            } else {
-                player.sendMessage(ChatColor.RED + "Failed to create the chest config file.");
-                return false;
-            }
-        } catch (IOException e) {
-            player.sendMessage(ChatColor.RED + "An IO error occurred while creating the chest file.");
-            e.printStackTrace();
+        if (chestExists(worldName, x, y, z)) {
+            player.sendMessage(ChatColor.RED + "Chest contents already initialized, use remove or overwrite commands instead.");
             return false;
         }
+
+        // Serialize the inventory
+        String serializedInventory = CrunchiestChests.inventoryToBase64(defaultContents);
+
+        // Set the chest's custom name if provided in arguments
+        String chestName = CrunchiestChests.buildFileName(block);
+
+        // Save the chest data to the database
+        if (saveChestData(worldName, x, y, z, serializedInventory, chestName)) {
+            player.sendMessage(ChatColor.GREEN + "Chest data initialized and saved to the database.");
+            if (chestName != null) {
+                player.sendMessage(ChatColor.AQUA + "Set chest name as " + chestName);
+            }
+        } else {
+            player.sendMessage(ChatColor.RED + "Failed to save chest data. Please try again.");
+        }
+
+        return true;
+    }
+
+    private boolean saveChestData(String world, int x, int y, int z, String serializedInventory, String name) {
+        String insertQuery = "INSERT INTO chests (world, x, y, z, inventory, chest_name) VALUES (?, ?, ?, ?, ?, ?)";
+        try (PreparedStatement ps = connection.prepareStatement(insertQuery)) {
+            ps.setString(1, world);
+            ps.setInt(2, x);
+            ps.setInt(3, y);
+            ps.setInt(4, z);
+            ps.setString(5, serializedInventory);
+            ps.setString(6, name);
+            ps.executeUpdate();
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace(); // Logging to console, consider using a logger
+        }
+        return false;
+    }
+
+    private boolean chestExists(String world, int x, int y, int z) {
+        String selectQuery = "SELECT id FROM chests WHERE world = ? AND x = ? AND y = ? AND z = ?";
+        try (PreparedStatement ps = connection.prepareStatement(selectQuery)) {
+            ps.setString(1, world);
+            ps.setInt(2, x);
+            ps.setInt(3, y);
+            ps.setInt(4, z);
+            ResultSet rs = ps.executeQuery();
+            return rs.next(); // Returns true if a chest exists at the specified coordinates
+        } catch (SQLException e) {
+            e.printStackTrace(); // Logging to console, consider using a logger
+        }
+        return false;
     }
 }

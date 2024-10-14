@@ -1,27 +1,31 @@
 package com.crunchiest.commands;
 
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.configuration.InvalidConfigurationException;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.block.Container;
 import org.bukkit.plugin.Plugin;
 
 import com.crunchiest.CrunchiestChests;
 
-import java.io.File;
-import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class UpdateChestAllExecutor implements CommandExecutor {
     // Plugin reference
-    Plugin plugin = CrunchiestChests.getPlugin(CrunchiestChests.class);
+    private final Plugin plugin = CrunchiestChests.getPlugin(CrunchiestChests.class);
+    private final Connection connection;
+
+    // Constructor to initialize SQLite database connection
+    public UpdateChestAllExecutor(Connection connection) {
+        this.connection = connection;
+    }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -43,78 +47,112 @@ public class UpdateChestAllExecutor implements CommandExecutor {
         BlockState state = block.getState();
 
         // Ensure the block is a container
-        if (!(state instanceof InventoryHolder)) {
+        if (!(state instanceof Container)) {
             player.sendMessage(ChatColor.RED + "The block you are looking at is not a container.");
             return false;
         }
 
-        // Build the file name for the chest configuration
-        String chestName = CrunchiestChests.buildFileName(block);
-        File customConfigFile = new File(plugin.getDataFolder(), chestName);
+        // Get world and coordinates of the block
+        String worldName = block.getWorld().getName();
+        int x = block.getX();
+        int y = block.getY();
+        int z = block.getZ();
 
-        if (!customConfigFile.exists()) {
-            player.sendMessage(ChatColor.RED + "Config file for the chest not found. Initialize the chest with /make-chest.");
+        // Check if chest data exists in the database
+        if (!chestExists(worldName, x, y, z)) {
+            player.sendMessage(ChatColor.RED + "Chest configuration not found in the database. Initialize the chest with /make-chest.");
             return false;
         }
 
-        // Load the existing chest configuration
-        FileConfiguration customConfig = new YamlConfiguration();
-        try {
-            customConfig.load(customConfigFile);
-        } catch (IOException | InvalidConfigurationException e) {
-            player.sendMessage(ChatColor.RED + "An error occurred while loading the chest configuration.");
-            e.printStackTrace();
-            return false;
-        }
-
-        // Check if the player has an instance of the chest
+        // Get the player's UUID and use it as a key to check if they have modified the chest
         String playerUUID = player.getUniqueId().toString();
-        if (!customConfig.contains(playerUUID)) {
+
+        // Fetch the current chest data from the database
+        String newContents = getPlayerChestContents(playerUUID, worldName, x, y, z);
+        if (newContents == null) {
             player.sendMessage(ChatColor.RED + "You need to modify the chest before trying to update it.");
             return false;
         }
 
-        // Store the current instance of the player's chest inventory and name
-        String newContents = customConfig.getString(playerUUID);
-        String name = customConfig.getString("Name", "");
+        // Fetch the name of the chest from the database (if any)
+        String chestName = getChestName(worldName, x, y, z);
 
-        // Delete the old chest configuration file
-        if (!customConfigFile.delete()) {
-            player.sendMessage(ChatColor.RED + "Failed to delete the existing chest data.");
-            return false;
-        }
-
-        player.sendMessage("Cleared current chest data.");
-
-        // Create a new configuration file for the chest
-        try {
-            if (!customConfigFile.createNewFile()) {
-                player.sendMessage(ChatColor.RED + "Failed to create a new chest configuration file.");
-                return false;
-            }
-
-            // Load the new file into the YamlConfiguration
-            try {
-                customConfig.load(customConfigFile);
-            } catch (IOException | InvalidConfigurationException e) {
-                player.sendMessage(ChatColor.RED + "An error occurred while loading the new chest configuration.");
-                e.printStackTrace();
-                return false;
-            }
-
-            // Write the new inventory data and chest name to the configuration
-            customConfig.set("Default_Contents", newContents);
-            if (!name.isEmpty()) {
-                customConfig.set("Name", name);
-            }
-
-            // Save the updated configuration file
-            customConfig.save(customConfigFile);
+        // Update the chest data in the database
+        if (updateChestInDatabase(worldName, x, y, z, newContents, chestName)) {
             player.sendMessage(ChatColor.GREEN + "Chest configuration successfully updated with new default contents.");
             return true;
+        } else {
+            player.sendMessage(ChatColor.RED + "Failed to update the chest data in the database.");
+            return false;
+        }
+    }
 
-        } catch (IOException e) {
-            player.sendMessage(ChatColor.RED + "An IO error occurred while creating the new chest configuration.");
+    // Method to check if the chest exists in the database
+    private boolean chestExists(String world, int x, int y, int z) {
+        String selectQuery = "SELECT id FROM chests WHERE world = ? AND x = ? AND y = ? AND z = ?";
+        try (PreparedStatement ps = connection.prepareStatement(selectQuery)) {
+            ps.setString(1, world);
+            ps.setInt(2, x);
+            ps.setInt(3, y);
+            ps.setInt(4, z);
+            ResultSet rs = ps.executeQuery();
+            return rs.next(); // Returns true if the chest exists
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // Method to fetch the player's chest contents from the database
+    private String getPlayerChestContents(String playerUUID, String world, int x, int y, int z) {
+        String selectQuery = "SELECT contents FROM player_chests WHERE player_uuid = ? AND world = ? AND x = ? AND y = ? AND z = ?";
+        try (PreparedStatement ps = connection.prepareStatement(selectQuery)) {
+            ps.setString(1, playerUUID);
+            ps.setString(2, world);
+            ps.setInt(3, x);
+            ps.setInt(4, y);
+            ps.setInt(5, z);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getString("contents");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null; // No contents found
+    }
+
+    // Method to fetch the chest name from the database
+    private String getChestName(String world, int x, int y, int z) {
+        String selectQuery = "SELECT name FROM chests WHERE world = ? AND x = ? AND y = ? AND z = ?";
+        try (PreparedStatement ps = connection.prepareStatement(selectQuery)) {
+            ps.setString(1, world);
+            ps.setInt(2, x);
+            ps.setInt(3, y);
+            ps.setInt(4, z);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getString("name");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return ""; // Return an empty name if no name is found
+    }
+
+    // Method to update the chest contents and name in the database
+    private boolean updateChestInDatabase(String world, int x, int y, int z, String contents, String name) {
+        String updateQuery = "UPDATE chests SET contents = ?, name = ? WHERE world = ? AND x = ? AND y = ? AND z = ?";
+        try (PreparedStatement ps = connection.prepareStatement(updateQuery)) {
+            ps.setString(1, contents);
+            ps.setString(2, name.isEmpty() ? null : name); // If name is empty, set to null
+            ps.setString(3, world);
+            ps.setInt(4, x);
+            ps.setInt(5, y);
+            ps.setInt(6, z);
+            int affectedRows = ps.executeUpdate();
+            return affectedRows > 0; // Returns true if the chest data was updated
+        } catch (SQLException e) {
             e.printStackTrace();
             return false;
         }

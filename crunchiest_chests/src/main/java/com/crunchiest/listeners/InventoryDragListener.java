@@ -1,16 +1,28 @@
 package com.crunchiest.listeners;
 
-import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.Bukkit;
 
 import com.crunchiest.CrunchiestChests;
 
-import java.io.File;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class InventoryDragListener implements Listener {
+
+    private final CrunchiestChests plugin;
+    private final Connection connection; // Reference to the database connection
+
+    // Constructor to inject the plugin instance and connection
+    public InventoryDragListener(CrunchiestChests plugin, Connection connection) {
+        this.plugin = plugin;
+        this.connection = connection;
+    }
 
     @EventHandler
     public void onTreasureChestDrag(InventoryDragEvent event) {
@@ -18,12 +30,17 @@ public class InventoryDragListener implements Listener {
         Inventory containerInventory = event.getInventory();
         int inventorySize = containerInventory.getSize();
 
-        // Get the chest file the player is interacting with
-        String chestName = CrunchiestChests.buildFileName(event.getWhoClicked().getTargetBlock(null, 200));
-        File customConfigFile = new File(Bukkit.getServer().getPluginManager().getPlugin("CrunchiestChests").getDataFolder(), chestName);
+        // Get the block the player is interacting with
+        String chestName;
+        try {
+            chestName = CrunchiestChests.buildFileName(event.getWhoClicked().getTargetBlock(null, 200));
+        } catch (Exception e) {
+            Bukkit.getLogger().severe("Error building chest name: " + e.getMessage());
+            return; // Exit if an error occurs
+        }
 
-        // If this is a Treasure Chest and the player lacks permission
-        if (customConfigFile.exists() && !event.getWhoClicked().hasPermission("chest-controls")) {
+        // Check if the chest exists in the database
+        if (chestExistsInDatabase(chestName) && !event.getWhoClicked().hasPermission("chest-controls")) {
             // Iterate through the dragged slots to check if any of them are within the chest's inventory
             for (int slot : event.getRawSlots()) {
                 if (slot < inventorySize) {
@@ -32,5 +49,21 @@ public class InventoryDragListener implements Listener {
                 }
             }
         }
+    }
+
+    // Method to check if a chest exists in the SQLite database
+    private boolean chestExistsInDatabase(String chestName) {
+        String query = "SELECT COUNT(*) FROM chests WHERE chest_name = ?"; // Ensure you have the correct column name
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setString(1, chestName);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1) > 0; // Return true if the chest exists
+            }
+        } catch (SQLException e) {
+            Bukkit.getLogger().severe("Database error while checking for chest: " + chestName);
+            e.printStackTrace();
+        }
+        return false; // Default to false if there was an error or chest does not exist
     }
 }

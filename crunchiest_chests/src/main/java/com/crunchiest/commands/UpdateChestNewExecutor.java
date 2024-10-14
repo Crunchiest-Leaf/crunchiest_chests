@@ -7,21 +7,25 @@ import org.bukkit.block.BlockState;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.configuration.InvalidConfigurationException;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
-import org.bukkit.plugin.Plugin;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 import com.crunchiest.CrunchiestChests;
 
-import java.io.File;
-import java.io.IOException;
-
 public class UpdateChestNewExecutor implements CommandExecutor {
-    // Reference to the plugin
-    private final Plugin plugin = CrunchiestChests.getPlugin(CrunchiestChests.class);
+    // Reference to the database connection
+    private final Connection connection;
+
+    // Constructor to pass the connection
+    public UpdateChestNewExecutor(Connection connection) {
+        this.connection = connection;
+    }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -49,45 +53,55 @@ public class UpdateChestNewExecutor implements CommandExecutor {
             return false;
         }
 
-        // Build the file name for the chest configuration
+        // Build the chest name based on the block's location
         String chestName = CrunchiestChests.buildFileName(block);
-        File customConfigFile = new File(plugin.getDataFolder(), chestName);
 
-        // Check if the configuration file exists
-        if (!customConfigFile.exists()) {
-            player.sendMessage(ChatColor.RED + "Config file for the chest not found. Initialize the chest with /make-chest instead.");
-            return false;
-        }
-
-        // Load the existing configuration file
-        FileConfiguration customConfig = new YamlConfiguration();
-        try {
-            customConfig.load(customConfigFile);
-        } catch (IOException | InvalidConfigurationException e) {
-            player.sendMessage(ChatColor.RED + "An error occurred while loading the chest configuration.");
-            e.printStackTrace();
-            return false;
-        }
-
-        // Check if the player's unique ID exists in the configuration
+        // Get the player's UUID
         String playerUUID = player.getUniqueId().toString();
-        if (!customConfig.contains(playerUUID)) {
-            player.sendMessage(ChatColor.RED + "You need to actually change the chest before you try to update it.");
-            return false;
-        }
 
-        // Write the new contents to the default line
-        customConfig.set("Default_Contents", customConfig.getString(playerUUID));
+        // Retrieve the chest's current contents for the player
         try {
-            customConfig.save(customConfigFile);
-        } catch (IOException e) {
-            player.sendMessage(ChatColor.RED + "An error occurred while saving the chest configuration.");
+            // Check if chest exists for the player in the database
+            String query = "SELECT contents FROM player_chests WHERE player_uuid = ? AND world = ? AND x = ? AND y = ? AND z = ?";
+            PreparedStatement stmt = connection.prepareStatement(query);
+            stmt.setString(1, playerUUID);
+            stmt.setString(2, block.getWorld().getName());
+            stmt.setInt(3, block.getX());
+            stmt.setInt(4, block.getY());
+            stmt.setInt(5, block.getZ());
+            ResultSet resultSet = stmt.executeQuery();
+
+            if (!resultSet.next()) {
+                player.sendMessage(ChatColor.RED + "You need to modify the chest contents before you try to update it.");
+                return false;
+            }
+
+            // Get the player's current chest contents
+            String newContentsBase64 = resultSet.getString("contents");
+
+            // Update the default chest contents for the chest (global for all players)
+            String updateQuery = "UPDATE chests SET contents = ? WHERE world = ? AND x = ? AND y = ? AND z = ?";
+            PreparedStatement updateStmt = connection.prepareStatement(updateQuery);
+            updateStmt.setString(1, newContentsBase64); // Set the new contents
+            updateStmt.setString(2, block.getWorld().getName());
+            updateStmt.setInt(3, block.getX());
+            updateStmt.setInt(4, block.getY());
+            updateStmt.setInt(5, block.getZ());
+
+            int rowsAffected = updateStmt.executeUpdate();
+
+            if (rowsAffected > 0) {
+                player.sendMessage(ChatColor.GREEN + "Default contents overwritten successfully.");
+            } else {
+                player.sendMessage(ChatColor.RED + "Chest not found in the database. Initialize the chest with /make-chest.");
+            }
+
+            return true;
+
+        } catch (SQLException e) {
+            player.sendMessage(ChatColor.RED + "An error occurred while accessing the chest data.");
             e.printStackTrace();
             return false;
         }
-
-        // Notify the player of success
-        player.sendMessage(ChatColor.GREEN + "Default contents overwritten successfully.");
-        return true;
     }
 }

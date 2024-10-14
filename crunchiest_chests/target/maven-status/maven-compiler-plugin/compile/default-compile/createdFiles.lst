@@ -1,5 +1,6 @@
 com\crunchiest\commands\UpdateChestAllExecutor.class
 com\crunchiest\CrunchiestChests$1.class
+com\crunchiest\util\Base64Coder.class
 com\crunchiest\commands\DeleteChestExecutor.class
 com\crunchiest\listeners\InventoryCloseListener.class
 com\crunchiest\listeners\InventoryOpenListener.class

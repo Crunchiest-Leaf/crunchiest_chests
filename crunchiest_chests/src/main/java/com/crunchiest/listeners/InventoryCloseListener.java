@@ -1,58 +1,98 @@
 package com.crunchiest.listeners;
 
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.configuration.InvalidConfigurationException;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
 import com.crunchiest.CrunchiestChests;
+import org.bukkit.block.Block;
 
-import java.io.File;
-import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class InventoryCloseListener implements Listener {
 
+    private final CrunchiestChests plugin;
+    private final Connection connection; // Reference to the database connection
+
+    // Constructor to inject the plugin instance and connection
+    public InventoryCloseListener(CrunchiestChests plugin, Connection connection) {
+        this.plugin = plugin;
+        this.connection = connection;
+    }
+
     @EventHandler
-    public void onTreasureChestClose(InventoryCloseEvent event) throws IOException {
+    public void onTreasureChestClose(InventoryCloseEvent event) {
         // Get player and chest information
         Player player = (Player) event.getPlayer();
         String playerUUID = player.getUniqueId().toString();
         Inventory containerInventory = event.getInventory();
-        String chestName = CrunchiestChests.buildFileName(player.getTargetBlock(null, 200));
-        
-        // Get the custom config file for the chest
-        File customConfigFile = new File(Bukkit.getServer().getPluginManager().getPlugin("CrunchiestChests").getDataFolder(), chestName);
 
-        // Check if the chest file exists
-        if (customConfigFile.exists()) {
-            player.sendMessage(ChatColor.GOLD + "Closing Treasure Chest...");
+        // Get the chest's block location
+        Block chestBlock = player.getTargetBlock(null, 200);
 
-            FileConfiguration customConfig = new YamlConfiguration();
+        // Check if the chest is saved in the database before saving the player's inventory
+        if (isChestSaved(chestBlock)) {
             try {
-                customConfig.load(customConfigFile);  // Load the chest configuration file
-            } catch (IOException | InvalidConfigurationException e) {
-                player.sendMessage(ChatColor.RED + "An error occurred while saving your loot.");
-                Bukkit.getLogger().severe("Error loading chest configuration for player " + playerUUID + " at chest: " + chestName);
+                savePlayerInventoryToDatabase(playerUUID, containerInventory, chestBlock);
+            } catch (SQLException e) {
+                Bukkit.getLogger().severe("Error saving inventory for player " + playerUUID + " at chest: " + CrunchiestChests.buildFileName(chestBlock));
                 e.printStackTrace();
-                return;
             }
-
-            // Save player's inventory in the config
-            if (customConfig.contains(playerUUID)) {
-                customConfig.set(playerUUID, CrunchiestChests.inventoryToBase64(containerInventory));  // Encode inventory to Base64
-                customConfig.save(customConfigFile);  // Save the updated configuration
-                player.sendMessage(ChatColor.GOLD + "Your loot log has been updated.");
-            } else {
-                player.sendMessage(ChatColor.RED + "No loot log found to save your items. Please contact staff.");
-                Bukkit.getLogger().warning("Failed to find player log for chest: " + chestName);
-            }
-        } else {
-            player.sendMessage(ChatColor.RED + "Treasure Chest not found.");
         }
     }
+
+    private boolean isChestSaved(Block chestBlock) {
+        String chestName = CrunchiestChests.buildFileName(chestBlock);
+        String query = "SELECT COUNT(*) FROM chests WHERE chest_name = ?";
+        
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setString(1, chestName);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0; // Returns true if there is at least one entry
+                }
+            }
+        } catch (SQLException e) {
+            Bukkit.getLogger().severe("Error checking if chest is saved: " + e.getMessage());
+        }
+        
+        return false; // Chest is not saved
+    }
+
+    private void savePlayerInventoryToDatabase(String playerUUID, Inventory inventory, Block chestBlock) throws SQLException {
+      String chestName = CrunchiestChests.buildFileName(chestBlock);
+  
+      // Encode inventory to Base64
+      String inventoryData = CrunchiestChests.inventoryToBase64(inventory);
+      if (inventoryData == null || inventoryData.isEmpty()) {
+          Bukkit.getLogger().severe("Inventory data is null or empty for player " + playerUUID);
+          return;
+      }
+      
+      // Prepare the SQL statement
+      String query = "INSERT INTO player_loot (player_uuid, chest_name, loot_contents) " +
+                    "VALUES (?, ?, ?) " +
+                    "ON CONFLICT(player_uuid, chest_name) " +
+                    "DO UPDATE SET loot_contents = excluded.loot_contents;";
+      try (PreparedStatement stmt = connection.prepareStatement(query)) {
+          stmt.setString(1, playerUUID);
+          stmt.setString(2, chestName);
+          stmt.setString(3, inventoryData);
+          
+          int affectedRows = stmt.executeUpdate();
+          if (affectedRows > 0) {
+              Bukkit.getLogger().info("Successfully updated inventory for player " + playerUUID + " in chest " + chestName);
+          } else {
+              Bukkit.getLogger().warning("No rows affected when trying to update inventory for player " + playerUUID);
+          }
+      } catch (SQLException e) {
+          Bukkit.getLogger().severe("Error saving inventory for player " + playerUUID + " at chest: " + chestName);
+          e.printStackTrace();
+      }
+    } 
 }
