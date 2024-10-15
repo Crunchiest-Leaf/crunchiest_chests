@@ -6,7 +6,7 @@ import org.bukkit.block.data.type.Chest;
 import org.bukkit.plugin.java.JavaPlugin;
 import com.crunchiest.commands.*;
 import com.crunchiest.listeners.*;
-import com.crunchiest.util.DatabaseManager;
+import com.crunchiest.util.DatabaseUtil;
 
 import java.io.File;
 import java.sql.Connection;
@@ -52,7 +52,7 @@ public final class CrunchiestChests extends JavaPlugin {
     @Override
     public void onDisable() {
         // Close the database connection
-        DatabaseManager.closeConnection(connection);
+        DatabaseUtil.closeConnection(connection);
     }
 
     /**
@@ -61,8 +61,8 @@ public final class CrunchiestChests extends JavaPlugin {
     private void initializeDatabase() {
         File dbFile = new File(getDataFolder(), "chests.db");
         try {
-            connection = DatabaseManager.initializeConnection(dbFile);
-            DatabaseManager.createTables(connection);
+            connection = DatabaseUtil.initializeConnection(dbFile);
+            DatabaseUtil.createTables(connection);
         } catch (SQLException e) {
             getLogger().severe("Failed to initialize database: " + e.getMessage());
             e.printStackTrace();

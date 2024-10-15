@@ -23,7 +23,7 @@ import java.sql.Statement;
 /**
  * Manages the database connection and operations for the Crunchiest Chests plugin.
  */
-public class DatabaseManager {
+public class DatabaseUtil {
 
     /**
      * Initializes the SQLite connection.
