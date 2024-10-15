@@ -26,7 +26,6 @@
 
 - `/make-chest`: Creates a new chest.
 - `/delete-chest`: Deletes an existing chest.
-- `/update-chest.new`: Updates newly created chests.
 
 ### Example
 
