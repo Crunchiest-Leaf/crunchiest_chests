@@ -30,7 +30,7 @@
 
 ### Example
 
-1. To create a new chest, type `/make-chest` in the game.
+1. To create a new chest, type `/make-chest #f0f0f0My Custom Chest` in the game. (custom names support hex colour codes)
 2. To delete a chest, use the command `/delete-chest`.
 3. Breaking a chest also removes it from the database!
 
