@@ -10,6 +10,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.inventory.Inventory;
 import com.crunchiest.CrunchiestChests;
+import com.crunchiest.util.ColourUtil;
+import com.crunchiest.util.InventoryUtils;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -47,8 +49,9 @@ public class InventoryOpenListener implements Listener {
         // Check if this chest has been initialized in the database
         if (chestExistsInDatabase(chestName)) {
 
+            String custom_name = ColourUtil.parseColoredString(getCustomName(chestName));
             // Cancel the opening of the original chest and create a new inventory
-            if (!event.getView().getTitle().equals(chestName)) {
+            if (!event.getView().getTitle().equals(custom_name)) {
                 player.sendMessage(ChatColor.GOLD + "You opened a Treasure Chest!");
                 event.setCancelled(true); // Cancel the opening of the original chest
 
@@ -64,7 +67,7 @@ public class InventoryOpenListener implements Listener {
                 String playerLootData = getPlayerLootFromDatabase(playerUUID, chestName);
                 Inventory containerInventory;
                 try {
-                    containerInventory = CrunchiestChests.inventoryFromBase64(playerLootData);
+                    containerInventory = InventoryUtils.inventoryFromBase64(playerLootData);
                 } catch (IOException e) {
                     player.sendMessage(ChatColor.RED + "Failed to retrieve your loot. Please try again later.");
                     Bukkit.getLogger().severe("Failed to decode inventory for player " + player.getName() + " and chest " + chestName);
@@ -73,7 +76,7 @@ public class InventoryOpenListener implements Listener {
                 }
 
                 int slots = containerInventory.getSize();
-                Inventory fakeInv = Bukkit.createInventory(player, slots, chestName);
+                Inventory fakeInv = Bukkit.createInventory(player, slots, custom_name);
                 fakeInv.setContents(containerInventory.getContents());
 
                 player.openInventory(fakeInv); // Open the instanced inventory for the player
@@ -100,21 +103,6 @@ public class InventoryOpenListener implements Listener {
         return false; // Default to false if there was an error or chest does not exist
     }
 
-    // Method to get the custom name of the chest from the database
-    private String getCustomNameFromDatabase(String chestName) {
-        String query = "SELECT chest_name FROM chests WHERE chest_name = ?";
-        try (PreparedStatement stmt = connection.prepareStatement(query)) {
-            stmt.setString(1, chestName);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                return rs.getString("chest_name");
-            }
-        } catch (SQLException e) {
-            Bukkit.getLogger().severe("Database error while fetching custom name for chest: " + chestName);
-            e.printStackTrace();
-        }
-        return "Treasure Chest"; // Default name if not found
-    }
 
     private String getDefaultContents(String chestName){
       String query = "SELECT inventory FROM chests WHERE chest_name = ?";
@@ -177,5 +165,19 @@ public class InventoryOpenListener implements Listener {
             e.printStackTrace();
         }
         return ""; // Default to empty string if there was an error or no loot found
+    }
+
+    private String getCustomName(String chestName) {
+      String query = "SELECT custom_name FROM chests WHERE chest_name = ?";
+      try (PreparedStatement stmt = connection.prepareStatement(query)) {
+        stmt.setString(1, chestName);
+        ResultSet rs = stmt.executeQuery();
+        if (rs.next()) {
+            return rs.getString("custom_name");
+        }
+    } catch (SQLException e) {
+      return "";
+    }
+    return ""; // Default to empty string if there was an error or no loot found
     }
 }

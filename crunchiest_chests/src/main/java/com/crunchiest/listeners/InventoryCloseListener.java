@@ -14,6 +14,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import com.crunchiest.util.InventoryUtils;
+
 public class InventoryCloseListener implements Listener {
 
     private final CrunchiestChests plugin;
@@ -68,12 +70,12 @@ public class InventoryCloseListener implements Listener {
       String chestName = CrunchiestChests.buildFileName(chestBlock);
   
       // Encode inventory to Base64
-      String inventoryData = CrunchiestChests.inventoryToBase64(inventory);
+      String inventoryData = InventoryUtils.inventoryToBase64(inventory);
       if (inventoryData == null || inventoryData.isEmpty()) {
           Bukkit.getLogger().severe("Inventory data is null or empty for player " + playerUUID);
           return;
       }
-      
+
       // Prepare the SQL statement
       String query = "INSERT INTO player_loot (player_uuid, chest_name, loot_contents) " +
                     "VALUES (?, ?, ?) " +

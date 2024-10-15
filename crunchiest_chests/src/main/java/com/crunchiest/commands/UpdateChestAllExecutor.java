@@ -105,7 +105,7 @@ public class UpdateChestAllExecutor implements CommandExecutor {
 
     // Method to fetch the player's chest contents from the database
     private String getPlayerChestContents(String playerUUID, String world, int x, int y, int z) {
-        String selectQuery = "SELECT contents FROM player_chests WHERE player_uuid = ? AND world = ? AND x = ? AND y = ? AND z = ?";
+        String selectQuery = "SELECT contents FROM player_loot WHERE player_uuid = ? AND world = ? AND x = ? AND y = ? AND z = ?";
         try (PreparedStatement ps = connection.prepareStatement(selectQuery)) {
             ps.setString(1, playerUUID);
             ps.setString(2, world);

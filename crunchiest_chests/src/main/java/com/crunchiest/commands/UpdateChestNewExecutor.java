@@ -1,6 +1,5 @@
 package com.crunchiest.commands;
 
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
@@ -8,7 +7,6 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 
 import java.sql.Connection;
@@ -62,7 +60,7 @@ public class UpdateChestNewExecutor implements CommandExecutor {
         // Retrieve the chest's current contents for the player
         try {
             // Check if chest exists for the player in the database
-            String query = "SELECT contents FROM player_chests WHERE player_uuid = ? AND world = ? AND x = ? AND y = ? AND z = ?";
+            String query = "SELECT loot_contents FROM player_loot WHERE player_uuid = ? AND world = ? AND x = ? AND y = ? AND z = ?";
             PreparedStatement stmt = connection.prepareStatement(query);
             stmt.setString(1, playerUUID);
             stmt.setString(2, block.getWorld().getName());
@@ -80,7 +78,7 @@ public class UpdateChestNewExecutor implements CommandExecutor {
             String newContentsBase64 = resultSet.getString("contents");
 
             // Update the default chest contents for the chest (global for all players)
-            String updateQuery = "UPDATE chests SET contents = ? WHERE world = ? AND x = ? AND y = ? AND z = ?";
+            String updateQuery = "UPDATE chests SET inventory = ? WHERE world = ? AND x = ? AND y = ? AND z = ?";
             PreparedStatement updateStmt = connection.prepareStatement(updateQuery);
             updateStmt.setString(1, newContentsBase64); // Set the new contents
             updateStmt.setString(2, block.getWorld().getName());

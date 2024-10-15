@@ -36,8 +36,6 @@ public class InventoryClickListener implements Listener {
 
         // Get the block the player is targeting
         Block targetBlock = player.getTargetBlock(null, 200);
-        // Build the chest name based on the block's location
-        String chestName = CrunchiestChests.buildFileName(targetBlock);
 
         // Check if the chest exists in the database
         boolean chestExists = checkChestExists(targetBlock);

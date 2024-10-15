@@ -1,6 +1,5 @@
 package com.crunchiest.commands;
 
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
@@ -10,11 +9,10 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
-import org.bukkit.plugin.Plugin;
 
 import com.crunchiest.CrunchiestChests;
+import com.crunchiest.util.InventoryUtils;
 
-import java.io.File;
 import java.sql.*;
 
 public class MakeChestExecutor implements CommandExecutor {
@@ -33,6 +31,20 @@ public class MakeChestExecutor implements CommandExecutor {
             sender.sendMessage(ChatColor.RED + "This command can only be run by a player.");
             return false;
         }
+        String custom_name = "Treasure Chest";
+        if (args.length > 0){
+          StringBuilder fullTitle = new StringBuilder();
+                
+                for (String arg : args) {
+                    if (fullTitle.length() > 0) {
+                        fullTitle.append(" "); // Add space between arguments
+                    }
+                    fullTitle.append(arg); // Append the current argument
+                }
+                custom_name = fullTitle.toString();
+        }
+
+
 
         Player player = (Player) sender;
 
@@ -74,13 +86,13 @@ public class MakeChestExecutor implements CommandExecutor {
         }
 
         // Serialize the inventory
-        String serializedInventory = CrunchiestChests.inventoryToBase64(defaultContents);
+        String serializedInventory = InventoryUtils.inventoryToBase64(defaultContents);
 
         // Set the chest's custom name if provided in arguments
         String chestName = CrunchiestChests.buildFileName(block);
 
         // Save the chest data to the database
-        if (saveChestData(worldName, x, y, z, serializedInventory, chestName)) {
+        if (saveChestData(worldName, x, y, z, serializedInventory, chestName, custom_name)) {
             player.sendMessage(ChatColor.GREEN + "Chest data initialized and saved to the database.");
             if (chestName != null) {
                 player.sendMessage(ChatColor.AQUA + "Set chest name as " + chestName);
@@ -92,8 +104,8 @@ public class MakeChestExecutor implements CommandExecutor {
         return true;
     }
 
-    private boolean saveChestData(String world, int x, int y, int z, String serializedInventory, String name) {
-        String insertQuery = "INSERT INTO chests (world, x, y, z, inventory, chest_name) VALUES (?, ?, ?, ?, ?, ?)";
+    private boolean saveChestData(String world, int x, int y, int z, String serializedInventory, String name, String custom_name) {
+        String insertQuery = "INSERT INTO chests (world, x, y, z, inventory, chest_name, custom_name) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement ps = connection.prepareStatement(insertQuery)) {
             ps.setString(1, world);
             ps.setInt(2, x);
@@ -101,6 +113,7 @@ public class MakeChestExecutor implements CommandExecutor {
             ps.setInt(4, z);
             ps.setString(5, serializedInventory);
             ps.setString(6, name);
+            ps.setString(7, custom_name);
             ps.executeUpdate();
             return true;
         } catch (SQLException e) {
