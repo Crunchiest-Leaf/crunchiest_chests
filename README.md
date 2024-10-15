@@ -11,7 +11,7 @@
 - **SQLite Backend**: Persistent storage of chest data using SQLite, ensuring data integrity and easy management.
 - **Custom Commands**: Intuitive commands for creating, deleting, and updating chests.
 - **Event Listeners**: Real-time interaction with chests through event listeners for various inventory actions.
-- **Legacy Color Support**: Converts hex color codes to Minecraft legacy colors for customized item displays.
+- **Legacy Color Support**: Converts hex color codes to Minecraft legacy colors for customized chest names.
 
 ## Installation
 
