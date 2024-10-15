@@ -1,5 +1,12 @@
 package com.crunchiest.commands;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.logging.Level;
+
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
@@ -12,11 +19,6 @@ import org.bukkit.inventory.Inventory;
 
 import com.crunchiest.CrunchiestChests;
 import com.crunchiest.util.InventoryUtils;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 
 /*
 * CRUNCHIEST CHESTS
@@ -92,12 +94,6 @@ public class MakeChestExecutor implements CommandExecutor {
     // Get the block the player is targeting
     Block block = player.getTargetBlock(null, 200);
 
-    // Ensure the player is looking at a valid block
-    if (block == null) {
-      player.sendMessage(ChatColor.RED + "You are not looking at any block.");
-      return false;
-    }
-
     BlockState state = block.getState();
 
     // Ensure the block is a container
@@ -164,7 +160,7 @@ public class MakeChestExecutor implements CommandExecutor {
       ps.executeUpdate();
       return true;
     } catch (SQLException e) {
-      e.printStackTrace(); // Consider using a logger for better logging practices
+      Bukkit.getLogger().log(Level.SEVERE, "Database error while deleting records for chest: {0}", e);
     }
     return false;
   }
@@ -188,7 +184,7 @@ public class MakeChestExecutor implements CommandExecutor {
       ResultSet rs = ps.executeQuery();
       return rs.next(); // Returns true if a chest exists at the specified coordinates
     } catch (SQLException e) {
-      e.printStackTrace(); // Consider using a logger for better logging practices
+      Bukkit.getLogger().log(Level.SEVERE, "Database error while deleting records for chest: {0}", e);
     }
     return false;
   }

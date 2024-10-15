@@ -1,16 +1,25 @@
 package com.crunchiest;
 
+import java.io.File;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.logging.Level;
+
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.type.Chest;
 import org.bukkit.plugin.java.JavaPlugin;
-import com.crunchiest.commands.*;
-import com.crunchiest.listeners.*;
-import com.crunchiest.util.DatabaseUtil;
 
-import java.io.File;
-import java.sql.Connection;
-import java.sql.SQLException;
+import com.crunchiest.commands.DeleteChestExecutor;
+import com.crunchiest.commands.MakeChestExecutor;
+import com.crunchiest.listeners.BlockBreakListener;
+import com.crunchiest.listeners.EntityExplodeListener;
+import com.crunchiest.listeners.InventoryClickListener;
+import com.crunchiest.listeners.InventoryCloseListener;
+import com.crunchiest.listeners.InventoryDragListener;
+import com.crunchiest.listeners.InventoryMoveItemListener;
+import com.crunchiest.listeners.InventoryOpenListener;
+import com.crunchiest.util.DatabaseUtil;
 
 /*
 * CRUNCHIEST CHESTS
@@ -64,8 +73,7 @@ public final class CrunchiestChests extends JavaPlugin {
             connection = DatabaseUtil.initializeConnection(dbFile);
             DatabaseUtil.createTables(connection);
         } catch (SQLException e) {
-            getLogger().severe("Failed to initialize database: " + e.getMessage());
-            e.printStackTrace();
+            getLogger().log(Level.SEVERE, "Failed to initialize database: {0}", e.getMessage());
         }
     }
 
@@ -75,8 +83,6 @@ public final class CrunchiestChests extends JavaPlugin {
     private void registerCommands() {
         getCommand("make-chest").setExecutor(new MakeChestExecutor(connection));
         getCommand("delete-chest").setExecutor(new DeleteChestExecutor(connection));
-        getCommand("update-chest.all").setExecutor(new UpdateChestAllExecutor(connection));
-        getCommand("update-chest.new").setExecutor(new UpdateChestNewExecutor(connection));
     }
 
     /**

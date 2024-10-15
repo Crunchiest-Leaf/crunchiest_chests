@@ -1,21 +1,22 @@
 package com.crunchiest.commands;
 
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.block.Block;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
-import org.bukkit.block.BlockState;
-import org.bukkit.block.Container;
-
-import com.crunchiest.CrunchiestChests;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.logging.Level;
+
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
+import org.bukkit.block.Container;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+
+import com.crunchiest.CrunchiestChests;
 
 /*
 * CRUNCHIEST CHESTS
@@ -41,7 +42,7 @@ import java.sql.SQLException;
 public class DeleteChestExecutor implements CommandExecutor {
 
   /** The connection to the SQLite database. */
-  private Connection connection;
+  private final Connection connection;
 
   /**
    * Constructs a {@code DeleteChestExecutor} with the specified SQLite database connection.
@@ -135,10 +136,9 @@ public class DeleteChestExecutor implements CommandExecutor {
     try (PreparedStatement stmt = connection.prepareStatement(query)) {
       stmt.setString(1, chestName); // Set the chest name to match
       int rowsAffected = stmt.executeUpdate(); // Execute the deletion
-      Bukkit.getLogger().info("Deleted " + rowsAffected + " records for chest: " + chestName);
+      Bukkit.getLogger().log(Level.INFO, "Deleted {0} records for chest: {1}", new Object[]{rowsAffected, chestName});
     } catch (SQLException e) {
-      Bukkit.getLogger().severe("Database error while deleting records for chest: " + chestName);
-      e.printStackTrace();
+      Bukkit.getLogger().log(Level.SEVERE, "Database error while deleting records for chest: {0}", chestName + e);
       return false;
     }
     return true;
@@ -164,7 +164,7 @@ public class DeleteChestExecutor implements CommandExecutor {
       ResultSet rs = ps.executeQuery();
       return rs.next(); // Returns true if the chest exists
     } catch (SQLException e) {
-      e.printStackTrace();
+      Bukkit.getLogger().log(Level.SEVERE, "{0}", e);
       return false;
     }
   }
@@ -189,7 +189,7 @@ public class DeleteChestExecutor implements CommandExecutor {
       int affectedRows = ps.executeUpdate();
       return affectedRows > 0; // Returns true if any rows were affected
     } catch (SQLException e) {
-      e.printStackTrace();
+      Bukkit.getLogger().log(Level.SEVERE, "{0}", e);
       return false;
     }
   }

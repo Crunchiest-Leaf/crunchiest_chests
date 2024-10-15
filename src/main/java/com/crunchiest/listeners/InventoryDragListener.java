@@ -1,16 +1,18 @@
 package com.crunchiest.listeners;
 
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.inventory.InventoryDragEvent;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.Bukkit;
-import com.crunchiest.CrunchiestChests;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.logging.Level;
+
+import org.bukkit.Bukkit;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.inventory.Inventory;
+
+import com.crunchiest.CrunchiestChests;
 
 /*
 * CRUNCHIEST CHESTS
@@ -59,7 +61,7 @@ public class InventoryDragListener implements Listener {
     try {
       chestName = CrunchiestChests.buildFileName(event.getWhoClicked().getTargetBlock(null, 200));
     } catch (Exception e) {
-      Bukkit.getLogger().severe("Error building chest name: " + e.getMessage());
+      Bukkit.getLogger().log(Level.SEVERE, "Error building chest name: {0}", e.getMessage());
       return; // Exit if an error occurs
     }
 
@@ -92,8 +94,8 @@ public class InventoryDragListener implements Listener {
         }
       }
     } catch (SQLException e) {
-      Bukkit.getLogger().severe("Database error while checking for chest: " + chestName);
-      e.printStackTrace();
+      Bukkit.getLogger().log(Level.SEVERE, "Database error while checking for chest: {0}{1}", new Object[]{chestName, e});
+
     }
     return false; // Default to false if an error occurs or chest does not exist
   }

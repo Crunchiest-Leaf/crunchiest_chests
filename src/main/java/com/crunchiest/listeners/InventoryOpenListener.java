@@ -1,5 +1,12 @@
 package com.crunchiest.listeners;
 
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.logging.Level;
+
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.block.Block;
@@ -13,12 +20,6 @@ import org.bukkit.inventory.Inventory;
 import com.crunchiest.CrunchiestChests;
 import com.crunchiest.util.ColourUtil;
 import com.crunchiest.util.InventoryUtils;
-
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 
 /*
 * CRUNCHIEST CHESTS
@@ -95,8 +96,7 @@ public class InventoryOpenListener implements Listener {
                     containerInventory = InventoryUtils.inventoryFromBase64(playerLootData);
                 } catch (IOException e) {
                     player.sendMessage(ChatColor.RED + "Failed to retrieve your loot. Please try again later.");
-                    Bukkit.getLogger().severe("Failed to decode inventory for player " + player.getName() + " and chest " + chestName);
-                    e.printStackTrace();
+                    Bukkit.getLogger().log(Level.SEVERE, "Failed to decode inventory for player " + player.getName() + " and chest " + chestName, e);
                     return; // Exit if there's an error
                 }
 
@@ -127,8 +127,7 @@ public class InventoryOpenListener implements Listener {
                 return rs.getInt(1) > 0; // Return true if the chest exists
             }
         } catch (SQLException e) {
-            Bukkit.getLogger().severe("Database error while checking for chest: " + chestName);
-            e.printStackTrace();
+            Bukkit.getLogger().log(Level.SEVERE, "Database error while checking for chest: " + chestName, e);
         }
         return false; // Default to false if there was an error or chest does not exist
     }
@@ -148,8 +147,7 @@ public class InventoryOpenListener implements Listener {
                 return rs.getString("inventory");
             }
         } catch (SQLException e) {
-            Bukkit.getLogger().severe("Database error while fetching chest loot: " + chestName);
-            e.printStackTrace();
+            Bukkit.getLogger().log(Level.SEVERE, "Database error while fetching chest loot: " + chestName, e);
         }
         return ""; // Default to empty string if there was an error or no loot found
     }
@@ -171,8 +169,7 @@ public class InventoryOpenListener implements Listener {
                 return rs.getInt(1) > 0; // Return true if the loot exists
             }
         } catch (SQLException e) {
-            Bukkit.getLogger().severe("Database error while checking for player loot: " + playerUUID + " for chest: " + chestName);
-            e.printStackTrace();
+            Bukkit.getLogger().log(Level.SEVERE, "Database error while checking for player loot: " + playerUUID + " for chest: " + chestName, e);
         }
         return false; // Default to false if there was an error or loot does not exist
     }
@@ -191,8 +188,7 @@ public class InventoryOpenListener implements Listener {
             stmt.setString(3, getDefaultContents(chestName)); // Use the actual default contents if applicable
             stmt.executeUpdate();
         } catch (SQLException e) {
-            Bukkit.getLogger().severe("Database error while initializing player loot: " + playerUUID + " for chest: " + chestName);
-            e.printStackTrace();
+            Bukkit.getLogger().log(Level.SEVERE, "Database error while initializing player loot: " + playerUUID + " for chest: " + chestName, e);
         }
     }
 
@@ -213,8 +209,7 @@ public class InventoryOpenListener implements Listener {
                 return rs.getString("loot_contents");
             }
         } catch (SQLException e) {
-            Bukkit.getLogger().severe("Database error while fetching player loot: " + playerUUID + " for chest: " + chestName);
-            e.printStackTrace();
+            Bukkit.getLogger().log(Level.SEVERE, "Database error while fetching player loot: " + playerUUID + " for chest: " + chestName, e);
         }
         return ""; // Default to empty string if there was an error or no loot found
     }
@@ -234,7 +229,7 @@ public class InventoryOpenListener implements Listener {
                 return rs.getString("custom_name");
             }
         } catch (SQLException e) {
-            return ""; // Return empty string on error
+            Bukkit.getLogger().log(Level.SEVERE, "Database error while fetching custom name for chest: " + chestName, e);
         }
         return ""; // Default to empty string if there was an error or no custom name found
     }
