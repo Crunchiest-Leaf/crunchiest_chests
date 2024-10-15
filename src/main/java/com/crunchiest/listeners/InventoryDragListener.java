@@ -52,7 +52,7 @@ public class InventoryDragListener implements Listener {
     int inventorySize = containerInventory.getSize();
 
     // Check if the chest exists in the database and if the player lacks permission
-    if (ChestUtil.chestExists(event.getInventory().getLocation().getBlock(), connection) && !event.getWhoClicked().hasPermission("chest-controls")) {
+    if (ChestUtil.chestExists(event.getWhoClicked().getTargetBlock(null, 200), connection) && !event.getWhoClicked().hasPermission("chest-controls")) {
       // Iterate through the dragged slots to check if any are within the chest's inventory
       for (int slot : event.getRawSlots()) {
         if (slot < inventorySize) {

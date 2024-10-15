@@ -2,7 +2,6 @@ package com.crunchiest.commands;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.logging.Level;
 
@@ -18,6 +17,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 
 import com.crunchiest.CrunchiestChests;
+import com.crunchiest.util.ChestUtil;
+import com.crunchiest.util.ColourUtil;
 import com.crunchiest.util.InventoryUtils;
 
 /*
@@ -105,13 +106,7 @@ public class MakeChestExecutor implements CommandExecutor {
     Container container = (Container) state;
     Inventory defaultContents = container.getInventory();
 
-    // Check if the chest data already exists in the database
-    String worldName = block.getWorld().getName();
-    int x = block.getX();
-    int y = block.getY();
-    int z = block.getZ();
-
-    if (chestExists(worldName, x, y, z)) {
+    if (ChestUtil.chestExists(block, connection)) {
       player.sendMessage(ChatColor.RED + "Chest contents already initialized, use remove or overwrite commands instead.");
       return false;
     }
@@ -123,10 +118,10 @@ public class MakeChestExecutor implements CommandExecutor {
     String chestName = CrunchiestChests.buildFileName(block);
 
     // Save the chest data to the database
-    if (saveChestData(worldName, x, y, z, serializedInventory, chestName, customName)) {
+    if (saveChestData(block, serializedInventory, chestName, customName)) {
       player.sendMessage(ChatColor.GREEN + "Chest data initialized and saved to the database.");
       if (chestName != null) {
-        player.sendMessage(ChatColor.AQUA + "Set chest name as " + chestName);
+        player.sendMessage(ChatColor.AQUA + "Set chest name as " + ColourUtil.parseColoredString(customName));
       }
     } else {
       player.sendMessage(ChatColor.RED + "Failed to save chest data. Please try again.");
@@ -147,13 +142,13 @@ public class MakeChestExecutor implements CommandExecutor {
    * @param customName The custom name assigned to the chest.
    * @return true if the chest data was successfully saved, false otherwise.
    */
-  private boolean saveChestData(String world, int x, int y, int z, String serializedInventory, String name, String customName) {
+  private boolean saveChestData(Block block, String serializedInventory, String name, String customName) {
     String insertQuery = "INSERT INTO chests (world, x, y, z, inventory, chest_name, custom_name) VALUES (?, ?, ?, ?, ?, ?, ?)";
     try (PreparedStatement ps = connection.prepareStatement(insertQuery)) {
-      ps.setString(1, world);
-      ps.setInt(2, x);
-      ps.setInt(3, y);
-      ps.setInt(4, z);
+      ps.setString(1, block.getWorld().getName());
+      ps.setInt(2, block.getX());
+      ps.setInt(3, block.getY());
+      ps.setInt(4, block.getZ());
       ps.setString(5, serializedInventory);
       ps.setString(6, name);
       ps.setString(7, customName);
@@ -165,27 +160,4 @@ public class MakeChestExecutor implements CommandExecutor {
     return false;
   }
 
-  /**
-   * Checks if a chest exists in the SQLite database at the specified coordinates.
-   *
-   * @param world The name of the world where the chest is located.
-   * @param x The x-coordinate of the chest.
-   * @param y The y-coordinate of the chest.
-   * @param z The z-coordinate of the chest.
-   * @return true if the chest exists, false otherwise.
-   */
-  private boolean chestExists(String world, int x, int y, int z) {
-    String selectQuery = "SELECT id FROM chests WHERE world = ? AND x = ? AND y = ? AND z = ?";
-    try (PreparedStatement ps = connection.prepareStatement(selectQuery)) {
-      ps.setString(1, world);
-      ps.setInt(2, x);
-      ps.setInt(3, y);
-      ps.setInt(4, z);
-      ResultSet rs = ps.executeQuery();
-      return rs.next(); // Returns true if a chest exists at the specified coordinates
-    } catch (SQLException e) {
-      Bukkit.getLogger().log(Level.SEVERE, "Database error while deleting records for chest: {0}", e);
-    }
-    return false;
-  }
 }

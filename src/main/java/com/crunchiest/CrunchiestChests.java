@@ -81,8 +81,18 @@ public final class CrunchiestChests extends JavaPlugin {
      * Registers plugin commands and their respective executors.
      */
     private void registerCommands() {
-        getCommand("make-chest").setExecutor(new MakeChestExecutor(connection));
-        getCommand("delete-chest").setExecutor(new DeleteChestExecutor(connection));
+      if (getCommand("make-chest") != null) {
+          getCommand("make-chest").setExecutor(new MakeChestExecutor(connection));
+      } else {
+          // Log an error message to indicate that the command is not found in plugin.yml
+          getLogger().severe("Command \"make-chest\" not found in plugin.yml. Cannot register command.");
+      }
+  
+      if (getCommand("delete-chest") != null) {
+          getCommand("delete-chest").setExecutor(new DeleteChestExecutor(connection));
+      } else {
+          getLogger().severe("Command \"delete-chest\" not found in plugin.yml. Cannot register command.");
+      }
     }
 
     /**

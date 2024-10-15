@@ -76,7 +76,7 @@ public class InventoryOpenListener implements Listener {
 
         // Check if this chest has been initialized in the database
         if (ChestUtil.chestExists(targetBlock, connection)) {
-            String customName = ColourUtil.parseColoredString(CrunchiestChests.buildFileName(targetBlock));
+            String customName = ColourUtil.parseColoredString(ChestUtil.getCustomName(targetBlock, connection));
             // Cancel the opening of the original chest and create a new inventory
             if (!event.getView().getTitle().equals(customName)) {
                 player.sendMessage(ChatColor.GOLD + "You opened a Treasure Chest!");

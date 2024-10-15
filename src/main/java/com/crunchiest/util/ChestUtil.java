@@ -126,4 +126,27 @@ public class ChestUtil {
       return false; // Default to false if there was an error or loot does not exist
   }
 
+        /**
+     * Retrieves the default contents for a chest from the database.
+     *
+     * @param chestName The name of the chest.
+     * @return The inventory contents as a Base64 string, or an empty string if an error occurs.
+     */
+    public static String getCustomName(Block targetBlock, Connection connection) {
+      String query = "SELECT custom_name FROM chests WHERE world = ? AND x = ? AND y = ? AND z = ?";
+      try (PreparedStatement stmt = connection.prepareStatement(query)) {
+          stmt.setString(1, targetBlock.getWorld().getName());
+          stmt.setInt(1, targetBlock.getX());
+          stmt.setInt(1, targetBlock.getY());
+          stmt.setInt(1, targetBlock.getZ());
+          ResultSet rs = stmt.executeQuery();
+          if (rs.next()) {
+              return rs.getString("inventory");
+          }
+      } catch (SQLException e) {
+          Bukkit.getLogger().log(Level.SEVERE, "Database error while fetching chest loot: ", e);
+      }
+      return ""; // Default to empty string if there was an error or no loot found
+  }
+
 }
