@@ -16,12 +16,10 @@ import java.util.List;
 
 public class EntityExplodeListener implements Listener {
 
-    private final CrunchiestChests plugin;
     private final Connection connection; // Reference to the database connection
 
     // Constructor to inject the plugin instance and connection
-    public EntityExplodeListener(CrunchiestChests plugin, Connection connection) {
-        this.plugin = plugin;
+    public EntityExplodeListener(Connection connection) {
         this.connection = connection;
     }
 

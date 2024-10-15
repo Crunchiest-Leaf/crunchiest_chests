@@ -16,12 +16,10 @@ import java.sql.SQLException;
 
 public class BlockBreakListener implements Listener {
 
-    private final CrunchiestChests plugin;
     private final Connection connection; // Reference to the database connection
 
     // Constructor to inject the plugin instance and connection
-    public BlockBreakListener(CrunchiestChests plugin, Connection connection) {
-        this.plugin = plugin;
+    public BlockBreakListener(Connection connection) {
         this.connection = connection;
     }
 

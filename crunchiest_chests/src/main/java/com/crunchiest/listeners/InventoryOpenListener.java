@@ -22,12 +22,10 @@ import java.io.IOException;
 
 public class InventoryOpenListener implements Listener {
 
-    private final CrunchiestChests plugin;
     private final Connection connection; // Reference to the database connection
 
     // Constructor to inject the plugin instance and connection
-    public InventoryOpenListener(CrunchiestChests plugin, Connection connection) {
-        this.plugin = plugin;
+    public InventoryOpenListener(Connection connection) {
         this.connection = connection;
     }
 

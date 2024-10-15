@@ -18,12 +18,10 @@ import com.crunchiest.util.InventoryUtils;
 
 public class InventoryCloseListener implements Listener {
 
-    private final CrunchiestChests plugin;
     private final Connection connection; // Reference to the database connection
 
     // Constructor to inject the plugin instance and connection
-    public InventoryCloseListener(CrunchiestChests plugin, Connection connection) {
-        this.plugin = plugin;
+    public InventoryCloseListener(Connection connection) {
         this.connection = connection;
     }
 

@@ -14,12 +14,10 @@ import java.sql.SQLException;
 
 public class InventoryMoveItemListener implements Listener {
 
-    private final CrunchiestChests plugin;
     private final Connection connection; // Reference to the database connection
 
     // Constructor to inject the plugin instance and connection
-    public InventoryMoveItemListener(CrunchiestChests plugin, Connection connection) {
-        this.plugin = plugin;
+    public InventoryMoveItemListener(Connection connection) {
         this.connection = connection;
     }
 

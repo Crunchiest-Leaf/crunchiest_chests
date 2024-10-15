@@ -8,8 +8,6 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 
-import com.crunchiest.CrunchiestChests;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -17,12 +15,10 @@ import java.sql.SQLException;
 
 public class InventoryClickListener implements Listener {
 
-    private final CrunchiestChests plugin;
     private final Connection connection; // Reference to the database connection
 
     // Constructor to inject the plugin instance and connection
-    public InventoryClickListener(CrunchiestChests plugin, Connection connection) {
-        this.plugin = plugin;
+    public InventoryClickListener(Connection connection) {
         this.connection = connection;
     }
 

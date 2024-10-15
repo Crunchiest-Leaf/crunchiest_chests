@@ -9,7 +9,6 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Container;
-import org.bukkit.plugin.Plugin;
 
 import com.crunchiest.CrunchiestChests;
 
@@ -20,7 +19,6 @@ import java.sql.SQLException;
 
 public class DeleteChestExecutor implements CommandExecutor {
 
-    private final Plugin plugin = CrunchiestChests.getPlugin(CrunchiestChests.class);
     private Connection connection;
 
     // Constructor to initialize SQLite database connection

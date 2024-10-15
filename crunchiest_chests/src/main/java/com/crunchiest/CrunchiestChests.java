@@ -61,13 +61,13 @@ public final class CrunchiestChests extends JavaPlugin {
 
     // Register Listeners
     private void registerListeners() {
-        getServer().getPluginManager().registerEvents(new InventoryOpenListener(this, connection), this);
-        getServer().getPluginManager().registerEvents(new InventoryCloseListener(this, connection), this);
-        getServer().getPluginManager().registerEvents(new InventoryClickListener(this, connection), this);
-        getServer().getPluginManager().registerEvents(new InventoryDragListener(this, connection), this);
-        getServer().getPluginManager().registerEvents(new InventoryMoveItemListener(this, connection), this);
-        getServer().getPluginManager().registerEvents(new BlockBreakListener(this, connection), this);
-        getServer().getPluginManager().registerEvents(new EntityExplodeListener(this, connection), this);
+        getServer().getPluginManager().registerEvents(new InventoryOpenListener(connection), this);
+        getServer().getPluginManager().registerEvents(new InventoryCloseListener(connection), this);
+        getServer().getPluginManager().registerEvents(new InventoryClickListener(connection), this);
+        getServer().getPluginManager().registerEvents(new InventoryDragListener(connection), this);
+        getServer().getPluginManager().registerEvents(new InventoryMoveItemListener(connection), this);
+        getServer().getPluginManager().registerEvents(new BlockBreakListener(connection), this);
+        getServer().getPluginManager().registerEvents(new EntityExplodeListener(connection), this);
     }
 
     // Build the file name for a chest configuration file based on the block's location

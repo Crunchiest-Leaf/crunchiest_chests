@@ -15,12 +15,10 @@ import java.sql.SQLException;
 
 public class InventoryDragListener implements Listener {
 
-    private final CrunchiestChests plugin;
     private final Connection connection; // Reference to the database connection
 
     // Constructor to inject the plugin instance and connection
-    public InventoryDragListener(CrunchiestChests plugin, Connection connection) {
-        this.plugin = plugin;
+    public InventoryDragListener(Connection connection) {
         this.connection = connection;
     }
 

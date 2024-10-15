@@ -51,9 +51,6 @@ public class UpdateChestNewExecutor implements CommandExecutor {
             return false;
         }
 
-        // Build the chest name based on the block's location
-        String chestName = CrunchiestChests.buildFileName(block);
-
         // Get the player's UUID
         String playerUUID = player.getUniqueId().toString();
 
