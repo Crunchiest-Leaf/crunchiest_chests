@@ -2,7 +2,6 @@ package com.crunchiest.listeners;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.logging.Level;
 
@@ -15,6 +14,7 @@ import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
 
 import com.crunchiest.CrunchiestChests;
+import com.crunchiest.util.ChestUtil;
 import com.crunchiest.util.InventoryUtils;
 
 /*
@@ -62,36 +62,13 @@ public class InventoryCloseListener implements Listener {
     Block chestBlock = player.getTargetBlock(null, 200);
 
     // Check if the chest is saved in the database
-    if (isChestSaved(chestBlock)) {
+    if (ChestUtil.chestExists(chestBlock, connection)) {
       try {
         savePlayerInventoryToDatabase(playerUUID, containerInventory, chestBlock);
       } catch (SQLException e) {
         Bukkit.getLogger().log(Level.SEVERE, "Error saving inventory for player {0} at chest: {1}", new Object[]{playerUUID, CrunchiestChests.buildFileName(chestBlock)});
       }
     }
-  }
-
-  /**
-   * Checks if the chest is saved in the database.
-   *
-   * @param chestBlock The block representing the treasure chest.
-   * @return {@code true} if the chest is saved in the database; {@code false} otherwise.
-   */
-  private boolean isChestSaved(Block chestBlock) {
-    String chestName = CrunchiestChests.buildFileName(chestBlock);
-    String query = "SELECT COUNT(*) FROM chests WHERE chest_name = ?";
-
-    try (PreparedStatement stmt = connection.prepareStatement(query)) {
-      stmt.setString(1, chestName);
-      try (ResultSet rs = stmt.executeQuery()) {
-        if (rs.next()) {
-          return rs.getInt(1) > 0; // Return true if the chest is saved
-        }
-      }
-    } catch (SQLException e) {
-      Bukkit.getLogger().log(Level.SEVERE, "Error checking if chest is saved: {0}", e.getMessage());
-    }
-    return false; // Chest is not saved
   }
 
   /**

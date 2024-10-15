@@ -1,17 +1,16 @@
 package com.crunchiest.listeners;
 
+import java.sql.Connection;
+
+import org.bukkit.block.Block;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
-import org.bukkit.block.Block;
-import org.bukkit.entity.Player;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import com.crunchiest.util.ChestUtil;
 
 /*
 * CRUNCHIEST CHESTS
@@ -63,7 +62,7 @@ public class InventoryClickListener implements Listener {
     Block targetBlock = player.getTargetBlock(null, 200);
 
     // Check if the chest exists in the database
-    boolean chestExists = checkChestExists(targetBlock);
+    boolean chestExists = ChestUtil.chestExists(targetBlock, connection);
 
     // If the chest exists and the player lacks permission, restrict their actions
     if (chestExists && !player.hasPermission("chest-controls")) {
@@ -87,24 +86,4 @@ public class InventoryClickListener implements Listener {
     }
   }
 
-  /**
-   * Checks if a treasure chest exists in the database based on the block's coordinates.
-   *
-   * @param block The block being interacted with.
-   * @return {@code true} if the chest exists in the database; {@code false} otherwise.
-   */
-  private boolean checkChestExists(Block block) {
-    String query = "SELECT * FROM chests WHERE world = ? AND x = ? AND y = ? AND z = ?";
-    try (PreparedStatement stmt = connection.prepareStatement(query)) {
-      stmt.setString(1, block.getWorld().getName());
-      stmt.setInt(2, block.getX());
-      stmt.setInt(3, block.getY());
-      stmt.setInt(4, block.getZ());
-      ResultSet resultSet = stmt.executeQuery();
-      return resultSet.next(); // Return true if chest exists
-    } catch (SQLException e) {
-      System.err.println("SQL error while checking chest existence: " + e.getMessage());
-      return false;
-    }
-  }
 }

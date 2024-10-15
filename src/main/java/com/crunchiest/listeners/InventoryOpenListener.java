@@ -18,6 +18,7 @@ import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.inventory.Inventory;
 
 import com.crunchiest.CrunchiestChests;
+import com.crunchiest.util.ChestUtil;
 import com.crunchiest.util.ColourUtil;
 import com.crunchiest.util.InventoryUtils;
 
@@ -74,8 +75,8 @@ public class InventoryOpenListener implements Listener {
         String chestName = CrunchiestChests.buildFileName(targetBlock);
 
         // Check if this chest has been initialized in the database
-        if (chestExistsInDatabase(chestName)) {
-            String customName = ColourUtil.parseColoredString(getCustomName(chestName));
+        if (ChestUtil.chestExists(targetBlock, connection)) {
+            String customName = ColourUtil.parseColoredString(CrunchiestChests.buildFileName(targetBlock));
             // Cancel the opening of the original chest and create a new inventory
             if (!event.getView().getTitle().equals(customName)) {
                 player.sendMessage(ChatColor.GOLD + "You opened a Treasure Chest!");
@@ -84,7 +85,7 @@ public class InventoryOpenListener implements Listener {
                 String playerUUID = player.getUniqueId().toString();
 
                 // Initialize player's loot if not present
-                if (!playerLootExistsInDatabase(playerUUID, chestName)) {
+                if (!ChestUtil.playerLootExistsInDatabase(playerUUID, chestName, connection)) {
                     player.sendMessage(ChatColor.RED + "First time opening, initializing for player.");
                     initializePlayerLootInDatabase(playerUUID, chestName);
                 }
@@ -113,68 +114,6 @@ public class InventoryOpenListener implements Listener {
     }
 
     /**
-     * Checks if a chest exists in the SQLite database.
-     *
-     * @param chestName The name of the chest to check.
-     * @return {@code true} if the chest exists in the database; {@code false} otherwise.
-     */
-    private boolean chestExistsInDatabase(String chestName) {
-        String query = "SELECT COUNT(*) FROM chests WHERE chest_name = ?";
-        try (PreparedStatement stmt = connection.prepareStatement(query)) {
-            stmt.setString(1, chestName);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                return rs.getInt(1) > 0; // Return true if the chest exists
-            }
-        } catch (SQLException e) {
-            Bukkit.getLogger().log(Level.SEVERE, "Database error while checking for chest: " + chestName, e);
-        }
-        return false; // Default to false if there was an error or chest does not exist
-    }
-
-    /**
-     * Retrieves the default contents for a chest from the database.
-     *
-     * @param chestName The name of the chest.
-     * @return The inventory contents as a Base64 string, or an empty string if an error occurs.
-     */
-    private String getDefaultContents(String chestName) {
-        String query = "SELECT inventory FROM chests WHERE chest_name = ?";
-        try (PreparedStatement stmt = connection.prepareStatement(query)) {
-            stmt.setString(1, chestName);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                return rs.getString("inventory");
-            }
-        } catch (SQLException e) {
-            Bukkit.getLogger().log(Level.SEVERE, "Database error while fetching chest loot: " + chestName, e);
-        }
-        return ""; // Default to empty string if there was an error or no loot found
-    }
-
-    /**
-     * Checks if the player's loot exists in the database.
-     *
-     * @param playerUUID The UUID of the player.
-     * @param chestName  The name of the chest.
-     * @return {@code true} if the loot exists; {@code false} otherwise.
-     */
-    private boolean playerLootExistsInDatabase(String playerUUID, String chestName) {
-        String query = "SELECT COUNT(*) FROM player_loot WHERE player_uuid = ? AND chest_name = ?";
-        try (PreparedStatement stmt = connection.prepareStatement(query)) {
-            stmt.setString(1, playerUUID);
-            stmt.setString(2, chestName);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                return rs.getInt(1) > 0; // Return true if the loot exists
-            }
-        } catch (SQLException e) {
-            Bukkit.getLogger().log(Level.SEVERE, "Database error while checking for player loot: " + playerUUID + " for chest: " + chestName, e);
-        }
-        return false; // Default to false if there was an error or loot does not exist
-    }
-
-    /**
      * Initializes the player's loot in the database.
      *
      * @param playerUUID The UUID of the player.
@@ -185,7 +124,7 @@ public class InventoryOpenListener implements Listener {
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
             stmt.setString(1, playerUUID);
             stmt.setString(2, chestName);
-            stmt.setString(3, getDefaultContents(chestName)); // Use the actual default contents if applicable
+            stmt.setString(3, ChestUtil.getDefaultContents(chestName, connection)); // Use the actual default contents if applicable
             stmt.executeUpdate();
         } catch (SQLException e) {
             Bukkit.getLogger().log(Level.SEVERE, "Database error while initializing player loot: " + playerUUID + " for chest: " + chestName, e);
@@ -212,25 +151,5 @@ public class InventoryOpenListener implements Listener {
             Bukkit.getLogger().log(Level.SEVERE, "Database error while fetching player loot: " + playerUUID + " for chest: " + chestName, e);
         }
         return ""; // Default to empty string if there was an error or no loot found
-    }
-
-    /**
-     * Retrieves the custom name for a chest from the database.
-     *
-     * @param chestName The name of the chest.
-     * @return The custom name of the chest, or an empty string if an error occurs.
-     */
-    private String getCustomName(String chestName) {
-        String query = "SELECT custom_name FROM chests WHERE chest_name = ?";
-        try (PreparedStatement stmt = connection.prepareStatement(query)) {
-            stmt.setString(1, chestName);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                return rs.getString("custom_name");
-            }
-        } catch (SQLException e) {
-            Bukkit.getLogger().log(Level.SEVERE, "Database error while fetching custom name for chest: " + chestName, e);
-        }
-        return ""; // Default to empty string if there was an error or no custom name found
     }
 }
