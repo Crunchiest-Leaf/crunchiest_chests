@@ -1,18 +1,34 @@
 package com.crunchiest;
 
+import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.type.Chest;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.Material;
 import com.crunchiest.commands.*;
 import com.crunchiest.listeners.*;
 import com.crunchiest.util.DatabaseManager;
-
 
 import java.io.File;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+/*
+* CRUNCHIEST CHESTS
+*   ____ ____  _   _ _   _  ____ _   _ ___ _____ ____ _____    ____ _   _ _____ ____ _____ ____  
+*  / ___|  _ \| | | | \ | |/ ___| | | |_ _| ____/ ___|_   _|  / ___| | | | ____/ ___|_   _/ ___| 
+* | |   | |_) | | | |  \| | |   | |_| || ||  _| \___ \ | |   | |   | |_| |  _| \___ \ | | \___ \ 
+* | |___|  _ <| |_| | |\  | |___|  _  || || |___ ___) || |   | |___|  _  | |___ ___) || |  ___) |
+*  \____|_| \_\\___/|_| \_|\____|_| |_|___|_____|____/ |_|    \____|_| |_|_____|____/ |_| |____/
+*
+* Author: Crunchiest_Leaf
+* 
+* Description: A TChest Alternative, w/ SQLite Backend
+* GitHub: https://github.com/Crunchiest-Leaf/crunchiest_chests/tree/main/crunchiest_chests
+*/
+
+/**
+ * Main class for the Crunchiest Chests plugin.
+ */
 public final class CrunchiestChests extends JavaPlugin {
     private Connection connection;
 
@@ -26,10 +42,10 @@ public final class CrunchiestChests extends JavaPlugin {
         // Initialize the SQLite database
         initializeDatabase();
 
-        // Register Commands
+        // Register commands
         registerCommands();
 
-        // Register Listeners
+        // Register listeners
         registerListeners();
     }
 
@@ -39,7 +55,9 @@ public final class CrunchiestChests extends JavaPlugin {
         DatabaseManager.closeConnection(connection);
     }
 
-    // Initialize the SQLite database
+    /**
+     * Initializes the SQLite database connection and creates necessary tables.
+     */
     private void initializeDatabase() {
         File dbFile = new File(getDataFolder(), "chests.db");
         try {
@@ -51,7 +69,9 @@ public final class CrunchiestChests extends JavaPlugin {
         }
     }
 
-    // Register Commands
+    /**
+     * Registers plugin commands and their respective executors.
+     */
     private void registerCommands() {
         getCommand("make-chest").setExecutor(new MakeChestExecutor(connection));
         getCommand("delete-chest").setExecutor(new DeleteChestExecutor(connection));
@@ -59,7 +79,9 @@ public final class CrunchiestChests extends JavaPlugin {
         getCommand("update-chest.new").setExecutor(new UpdateChestNewExecutor(connection));
     }
 
-    // Register Listeners
+    /**
+     * Registers event listeners for the plugin.
+     */
     private void registerListeners() {
         getServer().getPluginManager().registerEvents(new InventoryOpenListener(connection), this);
         getServer().getPluginManager().registerEvents(new InventoryCloseListener(connection), this);
@@ -70,7 +92,12 @@ public final class CrunchiestChests extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new EntityExplodeListener(connection), this);
     }
 
-    // Build the file name for a chest configuration file based on the block's location
+    /**
+     * Builds the file name for a chest configuration file based on the block's location.
+     *
+     * @param block The block representing the chest.
+     * @return A string representing the file name for the chest configuration.
+     */
     public static String buildFileName(Block block) {
         int x = block.getX();
         int y = block.getY();
@@ -103,7 +130,11 @@ public final class CrunchiestChests extends JavaPlugin {
         return block.getWorld().getEnvironment() + "_" + x + "_" + y + "_" + z;
     }
 
-    // Getter for the database connection
+    /**
+     * Getter for the database connection.
+     *
+     * @return The database connection.
+     */
     public Connection getConnection() {
         return connection;
     }

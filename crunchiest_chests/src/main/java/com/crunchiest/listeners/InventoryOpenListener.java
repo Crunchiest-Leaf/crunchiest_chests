@@ -9,26 +9,54 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.inventory.Inventory;
+
 import com.crunchiest.CrunchiestChests;
 import com.crunchiest.util.ColourUtil;
 import com.crunchiest.util.InventoryUtils;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import java.io.IOException;
+/*
+* CRUNCHIEST CHESTS
+*   ____ ____  _   _ _   _  ____ _   _ ___ _____ ____ _____    ____ _   _ _____ ____ _____ ____  
+*  / ___|  _ \| | | | \ | |/ ___| | | |_ _| ____/ ___|_   _|  / ___| | | | ____/ ___|_   _/ ___| 
+* | |   | |_) | | | |  \| | |   | |_| || ||  _| \___ \ | |   | |   | |_| |  _| \___ \ | | \___ \ 
+* | |___|  _ <| |_| | |\  | |___|  _  || || |___ ___) || |   | |___|  _  | |___ ___) || |  ___) |
+*  \____|_| \_\\___/|_| \_|\____|_| |_|___|_____|____/ |_|    \____|_| |_|_____|____/ |_| |____/
+*
+* Author: Crunchiest_Leaf
+* 
+* Description: A TChest Alternative, w/ SQLite Backend
+* GitHub: https://github.com/Crunchiest-Leaf/crunchiest_chests/tree/main/crunchiest_chests
+*/
 
+/**
+ * Listener that handles opening treasure chest inventories.
+ */
 public class InventoryOpenListener implements Listener {
 
-    private final Connection connection; // Reference to the database connection
+    /** Reference to the database connection. */
+    private final Connection connection;
 
-    // Constructor to inject the plugin instance and connection
+    /**
+     * Constructs an {@code InventoryOpenListener} with the provided database connection.
+     *
+     * @param connection The connection to the SQLite database.
+     */
     public InventoryOpenListener(Connection connection) {
         this.connection = connection;
     }
 
+    /**
+     * Event handler that triggers when a player attempts to open a treasure chest. It opens a custom inventory
+     * for the player if the chest exists in the database.
+     *
+     * @param event The inventory open event.
+     */
     @EventHandler
     public void openTreasureChest(InventoryOpenEvent event) {
         // Initialize variables
@@ -46,10 +74,9 @@ public class InventoryOpenListener implements Listener {
 
         // Check if this chest has been initialized in the database
         if (chestExistsInDatabase(chestName)) {
-
-            String custom_name = ColourUtil.parseColoredString(getCustomName(chestName));
+            String customName = ColourUtil.parseColoredString(getCustomName(chestName));
             // Cancel the opening of the original chest and create a new inventory
-            if (!event.getView().getTitle().equals(custom_name)) {
+            if (!event.getView().getTitle().equals(customName)) {
                 player.sendMessage(ChatColor.GOLD + "You opened a Treasure Chest!");
                 event.setCancelled(true); // Cancel the opening of the original chest
 
@@ -57,7 +84,7 @@ public class InventoryOpenListener implements Listener {
 
                 // Initialize player's loot if not present
                 if (!playerLootExistsInDatabase(playerUUID, chestName)) {
-                    player.sendMessage(ChatColor.RED + "First Time open, initialising for player");
+                    player.sendMessage(ChatColor.RED + "First time opening, initializing for player.");
                     initializePlayerLootInDatabase(playerUUID, chestName);
                 }
 
@@ -74,18 +101,23 @@ public class InventoryOpenListener implements Listener {
                 }
 
                 int slots = containerInventory.getSize();
-                Inventory fakeInv = Bukkit.createInventory(player, slots, custom_name);
+                Inventory fakeInv = Bukkit.createInventory(player, slots, customName);
                 fakeInv.setContents(containerInventory.getContents());
 
                 player.openInventory(fakeInv); // Open the instanced inventory for the player
             }
         } else {
-            // Notify player if the chest doesn't exist in the database
-            //player.sendMessage(ChatColor.RED + "This chest is not registered as a treasure chest.");
+            // Uncomment this line to notify player if the chest doesn't exist in the database
+            // player.sendMessage(ChatColor.RED + "This chest is not registered as a treasure chest.");
         }
     }
 
-    // Method to check if a chest exists in the SQLite database
+    /**
+     * Checks if a chest exists in the SQLite database.
+     *
+     * @param chestName The name of the chest to check.
+     * @return {@code true} if the chest exists in the database; {@code false} otherwise.
+     */
     private boolean chestExistsInDatabase(String chestName) {
         String query = "SELECT COUNT(*) FROM chests WHERE chest_name = ?";
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
@@ -101,23 +133,34 @@ public class InventoryOpenListener implements Listener {
         return false; // Default to false if there was an error or chest does not exist
     }
 
-
-    private String getDefaultContents(String chestName){
-      String query = "SELECT inventory FROM chests WHERE chest_name = ?";
-      try (PreparedStatement stmt = connection.prepareStatement(query)) {
-        stmt.setString(1, chestName);
-        ResultSet rs = stmt.executeQuery();
-        if (rs.next()) {
-            return rs.getString("inventory");
+    /**
+     * Retrieves the default contents for a chest from the database.
+     *
+     * @param chestName The name of the chest.
+     * @return The inventory contents as a Base64 string, or an empty string if an error occurs.
+     */
+    private String getDefaultContents(String chestName) {
+        String query = "SELECT inventory FROM chests WHERE chest_name = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setString(1, chestName);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return rs.getString("inventory");
+            }
+        } catch (SQLException e) {
+            Bukkit.getLogger().severe("Database error while fetching chest loot: " + chestName);
+            e.printStackTrace();
         }
-    } catch (SQLException e) {
-        Bukkit.getLogger().severe("Database error while fetching chest loot: " + chestName);
-        e.printStackTrace();
+        return ""; // Default to empty string if there was an error or no loot found
     }
-    return ""; // Default to empty string if there was an error or no loot found
-}
 
-    // Method to check if player's loot exists in the database
+    /**
+     * Checks if the player's loot exists in the database.
+     *
+     * @param playerUUID The UUID of the player.
+     * @param chestName  The name of the chest.
+     * @return {@code true} if the loot exists; {@code false} otherwise.
+     */
     private boolean playerLootExistsInDatabase(String playerUUID, String chestName) {
         String query = "SELECT COUNT(*) FROM player_loot WHERE player_uuid = ? AND chest_name = ?";
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
@@ -134,7 +177,12 @@ public class InventoryOpenListener implements Listener {
         return false; // Default to false if there was an error or loot does not exist
     }
 
-    // Method to initialize player's loot in the database
+    /**
+     * Initializes the player's loot in the database.
+     *
+     * @param playerUUID The UUID of the player.
+     * @param chestName  The name of the chest.
+     */
     private void initializePlayerLootInDatabase(String playerUUID, String chestName) {
         String query = "INSERT INTO player_loot (player_uuid, chest_name, loot_contents) VALUES (?, ?, ?)";
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
@@ -148,7 +196,13 @@ public class InventoryOpenListener implements Listener {
         }
     }
 
-    // Method to retrieve player's loot from the database
+    /**
+     * Retrieves the player's loot from the database.
+     *
+     * @param playerUUID The UUID of the player.
+     * @param chestName  The name of the chest.
+     * @return The loot contents as a Base64 string, or an empty string if an error occurs.
+     */
     private String getPlayerLootFromDatabase(String playerUUID, String chestName) {
         String query = "SELECT loot_contents FROM player_loot WHERE player_uuid = ? AND chest_name = ?";
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
@@ -165,17 +219,23 @@ public class InventoryOpenListener implements Listener {
         return ""; // Default to empty string if there was an error or no loot found
     }
 
+    /**
+     * Retrieves the custom name for a chest from the database.
+     *
+     * @param chestName The name of the chest.
+     * @return The custom name of the chest, or an empty string if an error occurs.
+     */
     private String getCustomName(String chestName) {
-      String query = "SELECT custom_name FROM chests WHERE chest_name = ?";
-      try (PreparedStatement stmt = connection.prepareStatement(query)) {
-        stmt.setString(1, chestName);
-        ResultSet rs = stmt.executeQuery();
-        if (rs.next()) {
-            return rs.getString("custom_name");
+        String query = "SELECT custom_name FROM chests WHERE chest_name = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setString(1, chestName);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return rs.getString("custom_name");
+            }
+        } catch (SQLException e) {
+            return ""; // Return empty string on error
         }
-    } catch (SQLException e) {
-      return "";
-    }
-    return ""; // Default to empty string if there was an error or no loot found
+        return ""; // Default to empty string if there was an error or no custom name found
     }
 }
