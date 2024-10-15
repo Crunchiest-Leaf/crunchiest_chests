@@ -35,7 +35,7 @@ public class ChestUtil {
       ResultSet resultSet = stmt.executeQuery();
       return resultSet.next(); // Return true if chest exists
     } catch (SQLException e) {
-      System.err.println("SQL error while checking chest existence: " + e.getMessage());
+      Bukkit.getLogger().log(Level.SEVERE, "{0}", e);
       return false;
     }
   }
