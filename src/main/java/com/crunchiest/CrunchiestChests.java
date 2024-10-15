@@ -114,20 +114,12 @@ public final class CrunchiestChests extends JavaPlugin {
             Chest chest = (Chest) block.getBlockData();
             if (chest.getType() == Chest.Type.RIGHT) {
                 switch (chest.getFacing()) {
-                    case NORTH:
-                        x--;
-                        break;
-                    case SOUTH:
-                        x++;
-                        break;
-                    case EAST:
-                        z--;
-                        break;
-                    case WEST:
-                        z++;
-                        break;
-                    default:
-                        break;
+                    case NORTH -> x--;
+                    case SOUTH -> x++;
+                    case EAST -> z--;
+                    case WEST -> z++;
+                    default -> {
+                    }
                 }
             }
         }
