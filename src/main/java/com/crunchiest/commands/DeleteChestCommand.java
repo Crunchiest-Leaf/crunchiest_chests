@@ -35,7 +35,7 @@ import com.crunchiest.util.ChestUtil;
  *
  * <p>This class implements {@link CommandExecutor} and works with SQLite as the database backend.
  */
-public class DeleteChestExecutor implements CommandExecutor {
+public class DeleteChestCommand implements CommandExecutor {
 
   /** The connection to the SQLite database. */
   private final Connection connection;
@@ -45,7 +45,7 @@ public class DeleteChestExecutor implements CommandExecutor {
    *
    * @param connection The connection to the SQLite database
    */
-  public DeleteChestExecutor(Connection connection) {
+  public DeleteChestCommand(Connection connection) {
     this.connection = connection;
   }
 

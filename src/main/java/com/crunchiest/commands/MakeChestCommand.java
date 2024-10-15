@@ -39,7 +39,7 @@ import com.crunchiest.util.InventoryUtils;
  * Command executor for creating treasure chests in the game.
  * This command stores the chest data in an SQLite database and sets a custom name if provided.
  */
-public class MakeChestExecutor implements CommandExecutor {
+public class MakeChestCommand implements CommandExecutor {
 
   /** Connection to the SQLite database. */
   private final Connection connection;
@@ -49,7 +49,7 @@ public class MakeChestExecutor implements CommandExecutor {
    *
    * @param connection The connection to the SQLite database.
    */
-  public MakeChestExecutor(Connection connection) {
+  public MakeChestCommand(Connection connection) {
     this.connection = connection;
   }
 

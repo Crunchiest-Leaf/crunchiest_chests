@@ -10,8 +10,8 @@ import org.bukkit.block.Block;
 import org.bukkit.block.data.type.Chest;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import com.crunchiest.commands.DeleteChestExecutor;
-import com.crunchiest.commands.MakeChestExecutor;
+import com.crunchiest.commands.DeleteChestCommand;
+import com.crunchiest.commands.MakeChestCommand;
 import com.crunchiest.listeners.BlockBreakListener;
 import com.crunchiest.listeners.EntityExplodeListener;
 import com.crunchiest.listeners.InventoryClickListener;
@@ -82,14 +82,14 @@ public final class CrunchiestChests extends JavaPlugin {
      */
     private void registerCommands() {
       if (getCommand("make-chest") != null) {
-          getCommand("make-chest").setExecutor(new MakeChestExecutor(connection));
+          getCommand("make-chest").setExecutor(new MakeChestCommand(connection));
       } else {
           // Log an error message to indicate that the command is not found in plugin.yml
           getLogger().severe("Command \"make-chest\" not found in plugin.yml. Cannot register command.");
       }
   
       if (getCommand("delete-chest") != null) {
-          getCommand("delete-chest").setExecutor(new DeleteChestExecutor(connection));
+          getCommand("delete-chest").setExecutor(new DeleteChestCommand(connection));
       } else {
           getLogger().severe("Command \"delete-chest\" not found in plugin.yml. Cannot register command.");
       }
