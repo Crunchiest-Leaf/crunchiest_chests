@@ -1,18 +1,20 @@
 package com.crunchiest.listeners;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.logging.Level;
+
 import org.bukkit.Bukkit;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
-import com.crunchiest.CrunchiestChests;
-import org.bukkit.block.Block;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import com.crunchiest.CrunchiestChests;
 import com.crunchiest.util.InventoryUtils;
 
 /*
@@ -64,10 +66,7 @@ public class InventoryCloseListener implements Listener {
       try {
         savePlayerInventoryToDatabase(playerUUID, containerInventory, chestBlock);
       } catch (SQLException e) {
-        Bukkit.getLogger().severe(
-            "Error saving inventory for player " + playerUUID 
-            + " at chest: " + CrunchiestChests.buildFileName(chestBlock));
-        e.printStackTrace();
+        Bukkit.getLogger().log(Level.SEVERE, "Error saving inventory for player {0} at chest: {1}", new Object[]{playerUUID, CrunchiestChests.buildFileName(chestBlock)});
       }
     }
   }
@@ -90,7 +89,7 @@ public class InventoryCloseListener implements Listener {
         }
       }
     } catch (SQLException e) {
-      Bukkit.getLogger().severe("Error checking if chest is saved: " + e.getMessage());
+      Bukkit.getLogger().log(Level.SEVERE, "Error checking if chest is saved: {0}", e.getMessage());
     }
     return false; // Chest is not saved
   }
@@ -110,7 +109,7 @@ public class InventoryCloseListener implements Listener {
     // Encode the inventory to Base64
     String inventoryData = InventoryUtils.inventoryToBase64(inventory);
     if (inventoryData == null || inventoryData.isEmpty()) {
-      Bukkit.getLogger().severe("Inventory data is null or empty for player " + playerUUID);
+      Bukkit.getLogger().log(Level.SEVERE, "Inventory data is null or empty for player {0}", playerUUID);
       return;
     }
 
@@ -128,18 +127,15 @@ public class InventoryCloseListener implements Listener {
 
       int affectedRows = stmt.executeUpdate();
       if (affectedRows > 0) {
-        Bukkit.getLogger().info(
-            "Successfully updated inventory for player " 
-            + playerUUID + " in chest " + chestName);
+        Bukkit.getLogger().log(Level.INFO, "Successfully updated inventory for player {0} in chest {1}", 
+            new Object[]{playerUUID, chestName});
       } else {
-        Bukkit.getLogger().warning(
-            "No rows affected when trying to update inventory for player " 
-            + playerUUID);
+        Bukkit.getLogger().log(Level.WARNING, "No rows affected when trying to update inventory for player {0}", 
+            playerUUID);
       }
     } catch (SQLException e) {
-      Bukkit.getLogger().severe(
-          "Error saving inventory for player " + playerUUID + " at chest: " + chestName);
-      e.printStackTrace();
+      Bukkit.getLogger().log(Level.SEVERE, "Error saving inventory for player {0} at chest: {1}",
+          new Object[]{playerUUID, chestName});
     }
   }
 }

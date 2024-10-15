@@ -1,18 +1,19 @@
 package com.crunchiest.listeners;
 
-import org.bukkit.block.Block;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityExplodeEvent;
-import org.bukkit.inventory.InventoryHolder;
-import com.crunchiest.CrunchiestChests;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.List;
+
+import org.bukkit.block.Block;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityExplodeEvent;
+import org.bukkit.inventory.InventoryHolder;
+
+import com.crunchiest.CrunchiestChests;
 
 /*
 * CRUNCHIEST CHESTS

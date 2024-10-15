@@ -1,5 +1,11 @@
 package com.crunchiest.listeners;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.logging.Level;
+
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.block.Block;
@@ -7,12 +13,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
-import com.crunchiest.CrunchiestChests;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import com.crunchiest.CrunchiestChests;
 
 /*
 * CRUNCHIEST CHESTS
@@ -99,7 +101,6 @@ public class BlockBreakListener implements Listener {
       }
     } catch (SQLException e) {
       player.sendMessage(ChatColor.RED + "An error occurred while accessing the chest data.");
-      e.printStackTrace();
     }
   }
 
@@ -114,10 +115,9 @@ public class BlockBreakListener implements Listener {
     try (PreparedStatement stmt = connection.prepareStatement(query)) {
       stmt.setString(1, chestName); // Set the chest name to match
       int rowsAffected = stmt.executeUpdate(); // Execute the deletion
-      Bukkit.getLogger().info("Deleted " + rowsAffected + " records for chest: " + chestName);
+      Bukkit.getLogger().log(Level.INFO, "Deleted {0} records for chest: {1}", new Object[]{rowsAffected, chestName});
     } catch (SQLException e) {
-      Bukkit.getLogger().severe("Database error while deleting records for chest: " + chestName);
-      e.printStackTrace();
+      Bukkit.getLogger().log(Level.SEVERE, "Database error while deleting records for chest: {0}", chestName);
       return false;
     }
     return true;

@@ -1,5 +1,10 @@
 package com.crunchiest.commands;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 import org.bukkit.ChatColor;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
@@ -8,11 +13,6 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.InventoryHolder;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 
 /*
 * CRUNCHIEST CHESTS
@@ -128,7 +128,6 @@ public class UpdateChestNewExecutor implements CommandExecutor {
 
     } catch (SQLException e) {
       player.sendMessage(ChatColor.RED + "An error occurred while accessing the chest data.");
-      e.printStackTrace();
       return false;
     }
   }

@@ -1,18 +1,18 @@
 package com.crunchiest.commands;
 
-import org.bukkit.ChatColor;
-import org.bukkit.block.Block;
-import org.bukkit.block.BlockState;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
-import org.bukkit.block.Container;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+
+import org.bukkit.ChatColor;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
+import org.bukkit.block.Container;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 
 /*
 * CRUNCHIEST CHESTS
@@ -135,7 +135,6 @@ public class UpdateChestAllExecutor implements CommandExecutor {
       ResultSet rs = ps.executeQuery();
       return rs.next(); // Returns true if the chest exists
     } catch (SQLException e) {
-      e.printStackTrace();
       return false;
     }
   }
@@ -163,7 +162,6 @@ public class UpdateChestAllExecutor implements CommandExecutor {
         return rs.getString("contents");
       }
     } catch (SQLException e) {
-      e.printStackTrace();
     }
     return null; // No contents found
   }
@@ -189,7 +187,6 @@ public class UpdateChestAllExecutor implements CommandExecutor {
         return rs.getString("name");
       }
     } catch (SQLException e) {
-      e.printStackTrace();
     }
     return ""; // Return an empty name if not found
   }
@@ -217,7 +214,6 @@ public class UpdateChestAllExecutor implements CommandExecutor {
       int affectedRows = ps.executeUpdate();
       return affectedRows > 0; // Returns true if the chest data was updated
     } catch (SQLException e) {
-      e.printStackTrace();
       return false;
     }
   }

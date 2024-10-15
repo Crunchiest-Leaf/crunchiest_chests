@@ -1,15 +1,21 @@
 package com.crunchiest.listeners;
 
-import org.bukkit.Bukkit;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.inventory.InventoryMoveItemEvent;
-import com.crunchiest.CrunchiestChests;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.logging.Level;
+
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.block.Block;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.InventoryMoveItemEvent;
+
+import com.crunchiest.CrunchiestChests;
+
 
 /*
 * CRUNCHIEST CHESTS
@@ -50,12 +56,28 @@ public class InventoryMoveItemListener implements Listener {
      */
     @EventHandler
     public void onItemMoveIntoTreasureChest(InventoryMoveItemEvent event) {
-        // Get the chest name based on the destination block's location
-        String chestName = CrunchiestChests.buildFileName(event.getDestination().getLocation().getBlock());
+        // Get the destination location
+        Location destinationLocation = event.getDestination().getLocation();
 
-        // If the destination is a Treasure Chest, check if it exists in the database
-        if (chestExistsInDatabase(chestName)) {
-            event.setCancelled(true); // Cancel the item transfer
+        // Check if the destination location and its block are not null
+        if (destinationLocation != null) {
+            Block destinationBlock = destinationLocation.getBlock();
+
+            // Get the chest name based on the destination block's location
+            String chestName = CrunchiestChests.buildFileName(destinationBlock);
+
+            // Check if the block is a chest
+            if (destinationBlock.getType() == Material.CHEST || 
+                destinationBlock.getType() == Material.TRAPPED_CHEST) {
+                
+                // If the destination is a Treasure Chest, check if it exists in the database
+                if (chestExistsInDatabase(chestName)) {
+                    event.setCancelled(true); // Cancel the item transfer
+                }
+            }
+        } else {
+            // Log a warning or handle the null case if necessary
+            System.out.println("Destination location is null. Cannot check for Treasure Chest.");
         }
     }
 
@@ -76,8 +98,7 @@ public class InventoryMoveItemListener implements Listener {
                 }
             }
         } catch (SQLException e) {
-            Bukkit.getLogger().severe("Database error while checking for chest: " + chestName);
-            e.printStackTrace();
+            Bukkit.getLogger().log(Level.SEVERE, "Database error while checking for chest: {0}", chestName);
         }
         return false; // Default to false if there was an error or chest does not exist
     }
