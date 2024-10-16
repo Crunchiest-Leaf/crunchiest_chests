@@ -15,6 +15,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import com.crunchiest.commands.DeleteChestCommand;
 import com.crunchiest.commands.MakeChestCommand;
 import com.crunchiest.listeners.BlockBreakListener;
+import com.crunchiest.listeners.ChestPistonListener;
 import com.crunchiest.listeners.EntityExplodeListener;
 import com.crunchiest.listeners.InventoryClickListener;
 import com.crunchiest.listeners.InventoryCloseListener;
@@ -116,15 +117,16 @@ public final class CrunchiestChests extends JavaPlugin {
     /**
      * Registers event listeners for the plugin.
      */
-    private void registerListeners() {
-        getServer().getPluginManager().registerEvents(new InventoryOpenListener(connection), this);
-        getServer().getPluginManager().registerEvents(new InventoryCloseListener(connection), this);
-        getServer().getPluginManager().registerEvents(new InventoryClickListener(connection), this);
-        getServer().getPluginManager().registerEvents(new InventoryDragListener(connection), this);
-        getServer().getPluginManager().registerEvents(new InventoryMoveItemListener(connection), this);
-        getServer().getPluginManager().registerEvents(new BlockBreakListener(connection), this);
-        getServer().getPluginManager().registerEvents(new EntityExplodeListener(connection), this);
-    }
+private void registerListeners() {
+    getServer().getPluginManager().registerEvents(new InventoryOpenListener(connection), this);
+    getServer().getPluginManager().registerEvents(new InventoryCloseListener(connection), this);
+    getServer().getPluginManager().registerEvents(new InventoryClickListener(connection), this);
+    getServer().getPluginManager().registerEvents(new InventoryDragListener(connection), this);
+    getServer().getPluginManager().registerEvents(new InventoryMoveItemListener(connection), this);
+    getServer().getPluginManager().registerEvents(new BlockBreakListener(connection), this);
+    getServer().getPluginManager().registerEvents(new EntityExplodeListener(connection), this);
+    getServer().getPluginManager().registerEvents(new ChestPistonListener(connection), this); 
+}
 
     /**
      * Builds the file name for a chest configuration file based on the block's location.
