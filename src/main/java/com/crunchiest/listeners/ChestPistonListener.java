@@ -10,7 +10,6 @@ import org.bukkit.event.block.BlockPistonExtendEvent;
 import org.bukkit.event.block.BlockPistonRetractEvent;
 import org.bukkit.inventory.InventoryHolder;
 
-import com.crunchiest.CrunchiestChests;
 import com.crunchiest.util.ChestUtil;
 
 /**
@@ -42,7 +41,7 @@ public class ChestPistonListener implements Listener {
       for (Block block : affectedBlocks) {
         if (isProtectedChest(block)) {
           System.out.println("Treasure chest detected. Preventing piston movement at: "
-              + CrunchiestChests.buildFileName(block));
+              + ChestUtil.buildFileName(block));
           event.setCancelled(true); // Cancel the piston extension event
           break;
         }
@@ -61,7 +60,7 @@ public class ChestPistonListener implements Listener {
       for (Block block : affectedBlocks) {
         if (isProtectedChest(block)) {
           System.out.println("Treasure chest detected. Preventing piston movement at: "
-              + CrunchiestChests.buildFileName(block));
+              + ChestUtil.buildFileName(block));
           event.setCancelled(true); // Cancel the piston retraction event
           break;
         }

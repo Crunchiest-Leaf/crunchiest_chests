@@ -17,7 +17,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.inventory.Inventory;
 
-import com.crunchiest.CrunchiestChests;
 import com.crunchiest.util.ChestUtil;
 import com.crunchiest.util.ColourUtil;
 import com.crunchiest.util.InventoryUtils;
@@ -72,7 +71,7 @@ public class InventoryOpenListener implements Listener {
             return; // Exit early if the target block is not a container
         }
 
-        String chestName = CrunchiestChests.buildFileName(targetBlock);
+        String chestName = ChestUtil.buildFileName(targetBlock);
 
         // Check if this chest has been initialized in the database
         if (ChestUtil.chestExists(targetBlock, connection)) {

@@ -11,7 +11,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 
-import com.crunchiest.CrunchiestChests;
 import com.crunchiest.util.ChestUtil;
 
 /**
@@ -118,7 +117,7 @@ public class BlockBreakListener implements Listener {
      * @return {@code true} if the loot data was successfully deleted; {@code false} otherwise.
      */
     private boolean removePlayerLootData(Block block, Player player) {
-        String chestName = CrunchiestChests.buildFileName(block);
+        String chestName = ChestUtil.buildFileName(block);
         if (ChestUtil.deletePlayerLootByChestName(chestName, connection)) {
             player.sendMessage(ChatColor.GREEN + "Player loot data removed!");
             Bukkit.getLogger().log(Level.INFO, "Player loot data deleted for player: {0}, chest: {1}", 

@@ -13,7 +13,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
 
-import com.crunchiest.CrunchiestChests;
 import com.crunchiest.util.ChestUtil;
 import com.crunchiest.util.InventoryUtils;
 
@@ -66,7 +65,7 @@ public class InventoryCloseListener implements Listener {
       try {
         savePlayerInventoryToDatabase(playerUUID, containerInventory, chestBlock);
       } catch (SQLException e) {
-        Bukkit.getLogger().log(Level.SEVERE, "Error saving inventory for player {0} at chest: {1}", new Object[]{playerUUID, CrunchiestChests.buildFileName(chestBlock)});
+        Bukkit.getLogger().log(Level.SEVERE, "Error saving inventory for player {0} at chest: {1}", new Object[]{playerUUID, ChestUtil.buildFileName(chestBlock)});
       }
     }
   }
@@ -81,7 +80,7 @@ public class InventoryCloseListener implements Listener {
    */
   private void savePlayerInventoryToDatabase(
       String playerUUID, Inventory inventory, Block chestBlock) throws SQLException {
-    String chestName = CrunchiestChests.buildFileName(chestBlock);
+    String chestName = ChestUtil.buildFileName(chestBlock);
 
     // Encode the inventory to Base64
     String inventoryData = InventoryUtils.inventoryToBase64(inventory);

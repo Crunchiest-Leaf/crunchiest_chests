@@ -8,7 +8,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.data.type.Chest;
 
 /*
 * CRUNCHIEST CHESTS
@@ -233,6 +235,37 @@ public class ChestUtil {
     }
     return false;
   }
+
+      /**
+     * Builds the file name for a chest configuration file based on the block's location.
+     *
+     * @param block The block representing the chest.
+     * @return A string representing the file name for the chest configuration.
+     */
+    public static String buildFileName(Block block) {
+        int x = block.getX();
+        int y = block.getY();
+        int z = block.getZ();
+
+        // Ensure we handle double chests correctly
+        if (block.getType().equals(Material.CHEST)) {
+            Chest chest = (Chest) block.getBlockData();
+            if (chest.getType() == Chest.Type.RIGHT) {
+                switch (chest.getFacing()) {
+                    case NORTH -> x--;
+                    case SOUTH -> x++;
+                    case EAST -> z--;
+                    case WEST -> z++;
+                    default -> {
+                    }
+                }
+            }
+        }
+
+        // Build the file name based on world environment and coordinates
+        return block.getWorld().getEnvironment() + "_" + x + "_" + y + "_" + z;
+    }
+    
 }
 
 

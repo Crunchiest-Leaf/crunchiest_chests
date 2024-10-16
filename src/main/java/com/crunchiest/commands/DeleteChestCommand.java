@@ -11,7 +11,6 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import com.crunchiest.CrunchiestChests;
 import com.crunchiest.util.ChestUtil;
 
 /*
@@ -97,7 +96,7 @@ public class DeleteChestCommand implements CommandExecutor {
     }
 
     // Attempt to delete the player's loot entries for the chest
-    if (!ChestUtil.deletePlayerLootByChestName(CrunchiestChests.buildFileName(targetBlock), connection)) {
+    if (!ChestUtil.deletePlayerLootByChestName(ChestUtil.buildFileName(targetBlock), connection)) {
       player.sendMessage(ChatColor.RED + 
           "Something went wrong while trying to delete player entries for the chest.");
       return false;

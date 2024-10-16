@@ -16,7 +16,6 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 
-import com.crunchiest.CrunchiestChests;
 import com.crunchiest.util.ChestUtil;
 import com.crunchiest.util.ColourUtil;
 import com.crunchiest.util.InventoryUtils;
@@ -117,7 +116,7 @@ public class MakeChestCommand implements CommandExecutor {
     String serializedInventory = InventoryUtils.inventoryToBase64(defaultContents);
 
     // Set the chest's custom name if provided in arguments
-    String chestName = CrunchiestChests.buildFileName(block);
+    String chestName = ChestUtil.buildFileName(block);
 
     // Save the chest data to the database
     if (saveChestData(block, serializedInventory, chestName, customName)) {

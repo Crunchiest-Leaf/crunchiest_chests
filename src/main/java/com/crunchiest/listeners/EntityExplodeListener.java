@@ -10,7 +10,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.inventory.InventoryHolder;
 
-import com.crunchiest.CrunchiestChests;
 import com.crunchiest.util.ChestUtil;
 
 /*
@@ -64,7 +63,7 @@ public class EntityExplodeListener implements Listener {
       // Check if the block is a container (chest, etc.)
       if (block.getState() instanceof InventoryHolder) {
         // Build the chest name based on the block's location
-        String chestName = CrunchiestChests.buildFileName(block);
+        String chestName = ChestUtil.buildFileName(block);
 
         // If the chest exists in the database, prevent it from exploding
         if (ChestUtil.chestExists(block, connection)) {
