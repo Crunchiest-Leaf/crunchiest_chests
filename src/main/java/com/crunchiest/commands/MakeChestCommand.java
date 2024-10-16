@@ -65,9 +65,11 @@ public class MakeChestCommand implements CommandExecutor {
    */
   @Override
   public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-    // Ensure the command sender is a player
+    // Ensure the command sender is not null and is a player
     if (!(sender instanceof Player)) {
-      sender.sendMessage(ChatColor.RED + "This command can only be run by a player.");
+      if (sender != null) {
+        sender.sendMessage(ChatColor.RED + "This command can only be run by a player.");
+      }
       return false;
     }
 
@@ -159,5 +161,4 @@ public class MakeChestCommand implements CommandExecutor {
     }
     return false;
   }
-
 }

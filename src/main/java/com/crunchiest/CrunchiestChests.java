@@ -4,10 +4,12 @@ import java.io.File;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.type.Chest;
+import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import com.crunchiest.commands.DeleteChestCommand;
@@ -73,7 +75,7 @@ public final class CrunchiestChests extends JavaPlugin {
             connection = DatabaseUtil.initializeConnection(dbFile);
             DatabaseUtil.createTables(connection);
         } catch (SQLException e) {
-            getLogger().log(Level.SEVERE, "Failed to initialize database: {0}", e.getMessage());
+            getLogger().log(Level.SEVERE, "Failed to initialize database: ", e.getMessage());
         }
     }
 
@@ -81,18 +83,34 @@ public final class CrunchiestChests extends JavaPlugin {
      * Registers plugin commands and their respective executors.
      */
     private void registerCommands() {
-      if (getCommand("make-chest") != null) {
-          getCommand("make-chest").setExecutor(new MakeChestCommand(connection));
-      } else {
-          // Log an error message to indicate that the command is not found in plugin.yml
-          getLogger().severe("Command \"make-chest\" not found in plugin.yml. Cannot register command.");
-      }
-  
-      if (getCommand("delete-chest") != null) {
-          getCommand("delete-chest").setExecutor(new DeleteChestCommand(connection));
-      } else {
-          getLogger().severe("Command \"delete-chest\" not found in plugin.yml. Cannot register command.");
-      }
+        // Local variables to hold command instances to avoid calling getCommand() multiple times
+        PluginCommand makeChestCommand = getCommand("make-chest");
+        PluginCommand deleteChestCommand = getCommand("delete-chest");
+        
+        // Ensure connection and logger are not null
+        Logger logger = getLogger();
+        if (logger == null) {
+            throw new IllegalStateException("Logger is not initialized. Cannot continue registration.");
+        }
+
+        if (connection == null) {
+            logger.severe("Database connection is null. Cannot register any chest-related commands.");
+            return;  // Early exit to avoid further processing
+        }
+
+        // Register "make-chest" command if it exists
+        if (makeChestCommand != null) {
+            makeChestCommand.setExecutor(new MakeChestCommand(connection));
+        } else {
+            logger.severe("Command \"make-chest\" not found in plugin.yml. Cannot register command.");
+        }
+
+        // Register "delete-chest" command if it exists
+        if (deleteChestCommand != null) {
+            deleteChestCommand.setExecutor(new DeleteChestCommand(connection));
+        } else {
+            logger.severe("Command \"delete-chest\" not found in plugin.yml. Cannot register command.");
+        }
     }
 
     /**

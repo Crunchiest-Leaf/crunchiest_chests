@@ -40,7 +40,7 @@ public class ChestUtil {
     }
   }
 
-    /**
+  /**
    * Deletes chest data from the database based on the chest's location.
    *
    * @param world The name of the world the chest is located in
@@ -65,7 +65,7 @@ public class ChestUtil {
     }
   }
 
-    /**
+  /**
    * Deletes all player loot records associated with a specific chest.
    *
    * @param chestName The name of the chest for which player loot entries should be deleted
@@ -84,7 +84,7 @@ public class ChestUtil {
     return true;
   }
 
-      /**
+    /**
      * Retrieves the default contents for a chest from the database.
      *
      * @param chestName The name of the chest.
@@ -126,7 +126,7 @@ public class ChestUtil {
       return false; // Default to false if there was an error or loot does not exist
   }
 
-        /**
+    /**
      * Retrieves the default contents for a chest from the database.
      *
      * @param chestName The name of the chest.
