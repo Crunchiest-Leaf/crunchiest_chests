@@ -4,7 +4,7 @@
 
 ## Description
 
-**Crunchiest Chests** is a plugin for Minecraft servers that provides an alternative to the traditional treasure chest management system with a powerful SQLite backend. This plugin allows players to create and manage, treasure chests in a more streamlined way.
+**Crunchiest Chests** is a plugin for Minecraft servers that provides an alternative to the traditional treasure chest management system with a powerful SQLite backend. This plugin allows players to create and manage, treasure chests in a more streamlined way. Allowing for independant instances of player loot to be set up by staff members! No need for sharing!
 
 ## Features
 
