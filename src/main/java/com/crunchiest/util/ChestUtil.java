@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.bukkit.Bukkit;
 import org.bukkit.block.Block;
@@ -23,130 +24,221 @@ import org.bukkit.block.Block;
 * GitHub: https://github.com/Crunchiest-Leaf/crunchiest_chests/tree/main/crunchiest_chests
 */
 
+/**
+ * Utility class for performing chest-related operations with an SQLite database.
+ * This class contains methods for checking chest existence, deleting chest data,
+ * retrieving inventory contents, and handling player loot.
+ */
 public class ChestUtil {
 
-    public static boolean chestExists(Block block, Connection connection) {
-    String query = "SELECT * FROM chests WHERE world = ? AND x = ? AND y = ? AND z = ?";
-    try (PreparedStatement stmt = connection.prepareStatement(query)) {
-      stmt.setString(1, block.getWorld().getName());
-      stmt.setInt(2, block.getX());
-      stmt.setInt(3, block.getY());
-      stmt.setInt(4, block.getZ());
-      ResultSet resultSet = stmt.executeQuery();
-      return resultSet.next(); // Return true if chest exists
-    } catch (SQLException e) {
-      Bukkit.getLogger().log(Level.SEVERE, "{0}", e);
-      return false;
-    }
+  private static final Logger LOGGER = Bukkit.getLogger(); // Shared logger instance
+
+  /**
+   * Checks if a chest exists in the database based on the block's location.
+   *
+   * @param block The block representing the chest.
+   * @param connection The database connection.
+   * @return {@code true} if the chest exists, {@code false} otherwise.
+   */
+  public static boolean chestExists(Block block, Connection connection) {
+    String query = "SELECT 1 FROM chests WHERE world = ? AND x = ? AND y = ? AND z = ?";
+    return recordExists(query, connection, block);
   }
 
   /**
    * Deletes chest data from the database based on the chest's location.
    *
-   * @param world The name of the world the chest is located in
-   * @param x The x-coordinate of the chest
-   * @param y The y-coordinate of the chest
-   * @param z The z-coordinate of the chest
-   * @return true if the chest data was successfully deleted, false otherwise
+   * @param block The block representing the chest.
+   * @param connection The database connection.
+   * @return {@code true} if the chest data was successfully deleted, {@code false} otherwise.
    */
-  public static boolean deleteChestData(Block targetBlock, Connection connection) {
-    String deleteQuery = 
-        "DELETE FROM chests WHERE world = ? AND x = ? AND y = ? AND z = ?";
-    try (PreparedStatement ps = connection.prepareStatement(deleteQuery)) {
-      ps.setString(1, targetBlock.getWorld().getName());
-      ps.setInt(2, targetBlock.getX());
-      ps.setInt(3, targetBlock.getY());
-      ps.setInt(4, targetBlock.getZ());
-      int affectedRows = ps.executeUpdate();
-      return affectedRows > 0; // Returns true if any rows were affected
-    } catch (SQLException e) {
-      Bukkit.getLogger().log(Level.SEVERE, "{0}", e);
-      return false;
-    }
+  public static boolean deleteChestData(Block block, Connection connection) {
+    String query = "DELETE FROM chests WHERE world = ? AND x = ? AND y = ? AND z = ?";
+    return executeUpdate(query, connection, block) > 0;
   }
 
   /**
    * Deletes all player loot records associated with a specific chest.
    *
-   * @param chestName The name of the chest for which player loot entries should be deleted
-   * @return true if the deletion was successful, false otherwise
+   * @param chestName The name of the chest for which player loot entries should be deleted.
+   * @param connection The database connection.
+   * @return {@code true} if the deletion was successful, {@code false} otherwise.
    */
   public static boolean deletePlayerLootByChestName(String chestName, Connection connection) {
     String query = "DELETE FROM player_loot WHERE chest_name = ?";
-    try (PreparedStatement stmt = connection.prepareStatement(query)) {
-      stmt.setString(1, chestName); // Set the chest name to match
-      int rowsAffected = stmt.executeUpdate(); // Execute the deletion
-      Bukkit.getLogger().log(Level.INFO, "Deleted {0} records for chest: {1}", new Object[]{rowsAffected, chestName});
-    } catch (SQLException e) {
-      Bukkit.getLogger().log(Level.SEVERE, "Database error while deleting records for chest: {0}", chestName + e);
-      return false;
-    }
-    return true;
+    return executeUpdate(query, connection, chestName) > 0;
   }
 
-    /**
-     * Retrieves the default contents for a chest from the database.
-     *
-     * @param chestName The name of the chest.
-     * @return The inventory contents as a Base64 string, or an empty string if an error occurs.
-     */
-    public static String getDefaultContents(String chestName, Connection connection) {
-      String query = "SELECT inventory FROM chests WHERE chest_name = ?";
-      try (PreparedStatement stmt = connection.prepareStatement(query)) {
-          stmt.setString(1, chestName);
-          ResultSet rs = stmt.executeQuery();
-          if (rs.next()) {
-              return rs.getString("inventory");
-          }
-      } catch (SQLException e) {
-          Bukkit.getLogger().log(Level.SEVERE, "Database error while fetching chest loot: " + chestName, e);
-      }
-      return ""; // Default to empty string if there was an error or no loot found
+  /**
+   * Retrieves the default contents for a chest from the database.
+   *
+   * @param chestName The name of the chest.
+   * @param connection The database connection.
+   * @return The inventory contents as a Base64 string, or an empty string if an error occurs.
+   */
+  public static String getChestInventory(String chestName, Connection connection) {
+    String query = "SELECT inventory FROM chests WHERE chest_name = ?";
+    return queryString(query, connection, chestName, "inventory");
+  }
+
+  /**
+   * Retrieves the custom name of a chest from the database based on its location.
+   *
+   * @param block The block representing the chest.
+   * @param connection The database connection.
+   * @return The custom name of the chest, or an empty string if not found.
+   */
+  public static String getCustomName(Block block, Connection connection) {
+    String query = "SELECT custom_name FROM chests WHERE world = ? AND x = ? AND y = ? AND z = ?";
+    return queryString(query, connection, block, "custom_name");
   }
 
   /**
    * Checks if the player's loot exists in the database.
    *
    * @param playerUUID The UUID of the player.
-   * @param chestName  The name of the chest.
-   * @return {@code true} if the loot exists; {@code false} otherwise.
+   * @param chestName The name of the chest.
+   * @param connection The database connection.
+   * @return {@code true} if the loot exists, {@code false} otherwise.
    */
-  public static boolean playerLootExistsInDatabase(String playerUUID, String chestName, Connection connection) {
-      String query = "SELECT COUNT(*) FROM player_loot WHERE player_uuid = ? AND chest_name = ?";
-      try (PreparedStatement stmt = connection.prepareStatement(query)) {
-          stmt.setString(1, playerUUID);
-          stmt.setString(2, chestName);
-          ResultSet rs = stmt.executeQuery();
-          if (rs.next()) {
-              return rs.getInt(1) > 0; // Return true if the loot exists
-          }
-      } catch (SQLException e) {
-          Bukkit.getLogger().log(Level.SEVERE, "Database error while checking for player loot: " + playerUUID + " for chest: " + chestName, e);
+  public static boolean playerLootExistsInDatabase(String playerUUID, String chestName,
+      Connection connection) {
+    String query = "SELECT COUNT(*) FROM player_loot WHERE player_uuid = ? AND chest_name = ?";
+    try (PreparedStatement stmt = connection.prepareStatement(query)) {
+      stmt.setString(1, playerUUID);
+      stmt.setString(2, chestName);
+      try (ResultSet rs = stmt.executeQuery()) {
+        if (rs.next()) {
+          return rs.getInt(1) > 0;
+        }
       }
-      return false; // Default to false if there was an error or loot does not exist
+    } catch (SQLException e) {
+      LOGGER.log(Level.SEVERE, "Error checking player loot for player: " + playerUUID
+          + " chest: " + chestName, e);
+    }
+    return false;
   }
 
-    /**
-     * Retrieves the default contents for a chest from the database.
-     *
-     * @param chestName The name of the chest.
-     * @return The inventory contents as a Base64 string, or an empty string if an error occurs.
-     */
-    public static String getCustomName(Block targetBlock, Connection connection) {
-      String query = "SELECT custom_name FROM chests WHERE world = ? AND x = ? AND y = ? AND z = ?";
-      try (PreparedStatement stmt = connection.prepareStatement(query)) {
-          stmt.setString(1, targetBlock.getWorld().getName());
-          stmt.setInt(1, targetBlock.getX());
-          stmt.setInt(1, targetBlock.getY());
-          stmt.setInt(1, targetBlock.getZ());
-          ResultSet rs = stmt.executeQuery();
-          if (rs.next()) {
-              return rs.getString("inventory");
-          }
-      } catch (SQLException e) {
-          Bukkit.getLogger().log(Level.SEVERE, "Database error while fetching chest loot: ", e);
+  // === Private Helper Methods ===
+
+  /**
+   * Executes a query that returns a string result from a database for a given block location.
+   *
+   * @param query The SQL query to execute.
+   * @param connection The database connection.
+   * @param block The block representing the chest.
+   * @param columnName The column name to retrieve the result from.
+   * @return The result string from the query, or an empty string if no result is found.
+   */
+  private static String queryString(String query, Connection connection, Block block,
+      String columnName) {
+    try (PreparedStatement stmt = connection.prepareStatement(query)) {
+      stmt.setString(1, block.getWorld().getName());
+      stmt.setInt(2, block.getX());
+      stmt.setInt(3, block.getY());
+      stmt.setInt(4, block.getZ());
+      try (ResultSet rs = stmt.executeQuery()) {
+        if (rs.next()) {
+          return rs.getString(columnName);
+        }
       }
-      return ""; // Default to empty string if there was an error or no loot found
+    } catch (SQLException e) {
+      LOGGER.log(Level.SEVERE, "Error executing query: " + query, e);
+    }
+    return "";
   }
 
+  /**
+   * Executes a query that returns a string result for a given parameter.
+   *
+   * @param query The SQL query to execute.
+   * @param connection The database connection.
+   * @param parameter The parameter for the query (e.g., chest name).
+   * @param columnName The column name to retrieve the result from.
+   * @return The result string from the query, or an empty string if no result is found.
+   */
+  private static String queryString(String query, Connection connection, String parameter,
+      String columnName) {
+    try (PreparedStatement stmt = connection.prepareStatement(query)) {
+      stmt.setString(1, parameter);
+      try (ResultSet rs = stmt.executeQuery()) {
+        if (rs.next()) {
+          return rs.getString(columnName);
+        }
+      }
+    } catch (SQLException e) {
+      LOGGER.log(Level.SEVERE, "Error executing query: " + query, e);
+    }
+    return "";
+  }
+
+  /**
+   * Executes an update (INSERT, DELETE, UPDATE) operation for a block.
+   *
+   * @param query The SQL query to execute.
+   * @param connection The database connection.
+   * @param block The block representing the chest.
+   * @return The number of affected rows.
+   */
+  private static int executeUpdate(String query, Connection connection, Block block) {
+    try (PreparedStatement stmt = connection.prepareStatement(query)) {
+      stmt.setString(1, block.getWorld().getName());
+      stmt.setInt(2, block.getX());
+      stmt.setInt(3, block.getY());
+      stmt.setInt(4, block.getZ());
+      return stmt.executeUpdate();
+    } catch (SQLException e) {
+      LOGGER.log(Level.SEVERE, "Error executing update: " + query, e);
+    }
+    return 0;
+  }
+
+  /**
+   * Executes an update (INSERT, DELETE, UPDATE) operation for a single parameter.
+   *
+   * @param query The SQL query to execute.
+   * @param connection The database connection.
+   * @param parameter The parameter to set in the query.
+   * @return The number of affected rows.
+   */
+  private static int executeUpdate(String query, Connection connection, String parameter) {
+    try (PreparedStatement stmt = connection.prepareStatement(query)) {
+      stmt.setString(1, parameter);
+      return stmt.executeUpdate();
+    } catch (SQLException e) {
+      LOGGER.log(Level.SEVERE, "Error executing update: " + query, e);
+    }
+    return 0;
+  }
+
+  /**
+   * Checks if a record exists in the database based on a block's location.
+   *
+   * @param query The SQL query to execute.
+   * @param connection The database connection.
+   * @param block The block representing the chest.
+   * @return {@code true} if a record exists, {@code false} otherwise.
+   */
+  private static boolean recordExists(String query, Connection connection, Block block) {
+    try (PreparedStatement stmt = connection.prepareStatement(query)) {
+      stmt.setString(1, block.getWorld().getName());
+      stmt.setInt(2, block.getX());
+      stmt.setInt(3, block.getY());
+      stmt.setInt(4, block.getZ());
+      try (ResultSet rs = stmt.executeQuery()) {
+        return rs.next();
+      }
+    } catch (SQLException e) {
+      LOGGER.log(Level.SEVERE, "Error executing query: " + query, e);
+    }
+    return false;
+  }
 }
+
+
+
+
+
+
+
+

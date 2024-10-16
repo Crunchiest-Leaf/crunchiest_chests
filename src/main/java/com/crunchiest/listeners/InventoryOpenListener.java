@@ -124,7 +124,7 @@ public class InventoryOpenListener implements Listener {
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
             stmt.setString(1, playerUUID);
             stmt.setString(2, chestName);
-            stmt.setString(3, ChestUtil.getDefaultContents(chestName, connection)); // Use the actual default contents if applicable
+            stmt.setString(3, ChestUtil.getChestInventory(chestName, connection)); // Use the actual default contents if applicable
             stmt.executeUpdate();
         } catch (SQLException e) {
             Bukkit.getLogger().log(Level.SEVERE, "Database error while initializing player loot: " + playerUUID + " for chest: " + chestName, e);
